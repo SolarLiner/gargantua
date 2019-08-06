@@ -1,0 +1,10 @@
+[package]
+name = "starless-bin"
+version = "0.1.0"
+authors = ["Nathan Graule <solarliner@gmail.com>"]
+edition = "2018"
+
+[dependencies]
+color = { path = "../color" }
+png = "0.15.0"
+starless = { path = "../starless" }
