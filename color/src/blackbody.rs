@@ -84,14 +84,14 @@ const CIE_COLOR_MATCH: [[f64; 3]; 81] = [
 	[0.0000, 0.0000, 0.0000],
 ];
 
-pub fn blackbody_to_xyz(temperature: f64) -> (f64, f64, f64) {
+pub fn spectrum_to_xyz(f: &Fn(f64) -> f64) -> (f64, f64, f64) {
 	let mut x = 0_f64;
 	let mut y = 0_f64;
 	let mut z = 0_f64;
 	let mut i = 0_usize;
 
 	for lambda in (380..=780).step_by(5) {
-		let me: f64 = blackbody_spectrum(temperature, lambda as f64);
+		let me: f64 = f(lambda.into());
 		x += me * CIE_COLOR_MATCH[i][0];
 		y += me * CIE_COLOR_MATCH[i][1];
 		z += me * CIE_COLOR_MATCH[i][2];
@@ -103,7 +103,7 @@ pub fn blackbody_to_xyz(temperature: f64) -> (f64, f64, f64) {
 	return (x / sum, y / sum, z / sum);
 }
 
-fn blackbody_spectrum(temperature: f64, wavelength: f64) -> f64 {
+pub fn blackbody_spectrum(temperature: f64, wavelength: f64) -> f64 {
 	let wlm = wavelength * 1e-9_f64;
 	return (3.74183e-16 * wlm.powf(-5.0)) / ((1.4388e-2 / (wlm * temperature)).exp() - 1.0);
 }

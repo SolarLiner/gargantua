@@ -1,11 +1,11 @@
 [package]
-name = "starless-bin"
+name = "starless"
 version = "0.1.0"
 authors = ["Nathan Graule <solarliner@gmail.com>"]
 edition = "2018"
 
 [dependencies]
-color = { path = "../color" }
-starless = { path = "../starless" }
+color = {path = "../color"}
 image = "0.22.1"
 nalgebra = "0.18.0"
+rayon = "1.1.0"

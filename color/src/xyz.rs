@@ -1,6 +1,6 @@
-use crate::blackbody::blackbody_to_xyz;
+use crate::blackbody::{blackbody_spectrum, spectrum_to_xyz};
 use crate::color::Color;
-use crate::gamut::{XYChroma, ColorSystem, SYSTEM_SRGB};
+use crate::gamut::{ColorSystem, XYChroma, SYSTEM_SRGB};
 use std::fmt;
 
 #[derive(Clone, Debug, PartialEq)]
@@ -19,10 +19,13 @@ impl XYZ {
 			Z: xy.get_z() * y_ratio,
 		}
 	}
-	pub fn blackbody(temperature: f64) -> XYZ {
-		let (X, Y, Z) = blackbody_to_xyz(temperature);
+	pub fn from_spectral_data(f: &Fn(f64) -> f64) -> Self {
+		let (X, Y, Z) = spectrum_to_xyz(f);
 
 		XYZ { X, Y, Z }
+	}
+	pub fn blackbody(temperature: f64) -> Self {
+		Self::from_spectral_data(&|y| blackbody_spectrum(temperature, y))
 	}
 }
 

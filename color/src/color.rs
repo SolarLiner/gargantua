@@ -3,9 +3,10 @@ use crate::gamut::ColorSystem;
 use crate::gamut::SYSTEM_SRGB;
 use crate::xyz::XYZ;
 use std::fmt;
+use std::ops::{Add, AddAssign, Sub, SubAssign};
 
 /** Linear RGB Color structure */
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, Default, PartialEq)]
 pub struct Color {
 	pub red: f64,
 	pub green: f64,
@@ -38,10 +39,6 @@ impl Color {
 		let red = (color >> 16 & 255) as u8;
 		let green = (color >> 8 & 255) as u8;
 		let blue = (color & 255) as u8;
-		println!(
-			"DEBUG: color: {}, red: {}, green: {}, blue: {}",
-			color, red, green, blue
-		);
 
 		return Color {
 			red: red as f64 / 255f64,
@@ -97,6 +94,82 @@ impl Color {
 		}
 		return self.clone();
 	}
+	pub fn set_system(&self, sys: ColorSystem) -> Self {
+		let mut col = self.clone();
+		col.system = Some(sys);
+
+		return col;
+	}
+}
+
+impl Color {
+	pub fn mix(x: f64, a: Self, b: Self) -> Result<Self, &'static str> {
+		if a.system != b.system {
+			return Err("Cannot mix colors from different systems");
+		}
+
+		Ok(Color {
+			red: lerp(x, a.red, b.red),
+			green: lerp(x, a.green, b.green),
+			blue: lerp(x, a.blue, b.blue),
+			alpha: lerp(x, a.alpha, b.alpha),
+			system: a.system,
+		})
+	}
+}
+
+impl Add<Color> for Color {
+	type Output = Self;
+
+	fn add(self, rhs: Self) -> Self {
+		if self.system != rhs.system {
+			panic!("Cannot add colors from different systems");
+		}
+
+		Self {
+			red: self.red + rhs.red,
+			green: self.green + rhs.green,
+			blue: self.blue + rhs.blue,
+			alpha: self.alpha + rhs.alpha,
+			system: self.system,
+		}
+	}
+}
+
+impl Sub<Color> for Color {
+	type Output = Self;
+
+	fn sub(self, rhs: Self) -> Self {
+		if self.system != rhs.system {
+			panic!("Cannot subtract colors from different systems");
+		}
+
+		Self {
+			red: self.red - rhs.red,
+			green: self.green - rhs.green,
+			blue: self.blue - rhs.blue,
+			alpha: self.alpha - rhs.alpha,
+			system: self.system,
+		}
+	}
+}
+
+impl AddAssign<Color> for Color {
+	fn add_assign(&mut self, rhs: Self) {
+		self.red += rhs.red;
+		self.green += rhs.green;
+		self.blue += rhs.blue;
+		self.alpha += rhs.alpha;
+	}
+}
+
+impl SubAssign<Color> for Color {
+	fn sub_assign(&mut self, rhs: Self) {
+		self.red -= rhs.red;
+		self.green -= rhs.green;
+		self.blue -= rhs.blue;
+		self.alpha -= rhs.alpha;
+	}
 }
 
 impl fmt::Display for Color {
@@ -135,4 +208,8 @@ mod tests {
 			col.to_hex_code(true).to_uppercase()
 		);
 	}
+}
+
+fn lerp(x: f64, a: f64, b: f64) -> f64 {
+	(1.0 - x) * a + x * b
 }
