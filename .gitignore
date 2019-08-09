@@ -4,4 +4,4 @@ Cargo.lock
 bin/
 pkg/
 wasm-pack.log
-*.png
+**/*.png
