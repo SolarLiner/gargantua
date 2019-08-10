@@ -3,7 +3,6 @@ use nalgebra::{Translation3, Vector3};
 use regex::Regex;
 
 use starless::raytrace::render::render;
-use starless::raytrace::Renderable;
 use starless::{Camera, GRScene, Scene, Sphere, Texture, TextureFiltering, TextureMode};
 
 use std::{f64, u32};
@@ -126,9 +125,18 @@ fn run(st_type: SpaceTime, output: &str, width: u32, height: u32, quiet: bool) {
 	}
 
 	if quiet {
-		println!("Done in {:.2} s.", start.elapsed().as_millis() as f64 / 1000.0);
+		println!(
+			"Done in {:.2} s.",
+			start.elapsed().as_millis() as f64 / 1000.0
+		);
 	} else {
-		report(1.0, format!("Done in {:.2} s.", start.elapsed().as_millis() as f64 / 1000.0));
+		report(
+			1.0,
+			format!(
+				"Done in {:.2} s.",
+				start.elapsed().as_millis() as f64 / 1000.0
+			),
+		);
 	}
 	print!("\n");
 }
