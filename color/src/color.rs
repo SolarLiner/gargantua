@@ -2,7 +2,7 @@ use crate::gamut::ColorSystem;
 use crate::gamut::SYSTEM_SRGB;
 use crate::xyz::XYZ;
 use std::fmt;
-use std::ops::{Add, AddAssign, Sub, SubAssign};
+use std::ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Sub, SubAssign};
 
 /** Linear RGB Color structure */
 #[derive(Clone, Debug, Default, PartialEq)]
@@ -170,11 +170,116 @@ impl SubAssign<Color> for Color {
 	}
 }
 
+impl Mul<f64> for Color {
+	type Output = Self;
+	fn mul(self, rhs: f64) -> Self {
+		Self {
+			red: self.red * rhs,
+			green: self.green * rhs,
+			blue: self.blue * rhs,
+			alpha: self.alpha * rhs,
+			system: self.system,
+		}
+	}
+}
+
+impl Div<f64> for Color {
+	type Output = Self;
+	fn div(self, rhs: f64) -> Self {
+		Self {
+			red: self.red / rhs,
+			green: self.green / rhs,
+			blue: self.blue / rhs,
+			alpha: self.alpha / rhs,
+			system: self.system,
+		}
+	}
+}
+
+impl MulAssign<f64> for Color {
+	fn mul_assign(&mut self, rhs: f64) {
+		self.red *= rhs;
+		self.green *= rhs;
+		self.blue *= rhs;
+		self.alpha *= rhs;
+	}
+}
+
+impl DivAssign<f64> for Color {
+	fn div_assign(&mut self, rhs: f64) {
+		self.red /= rhs;
+		self.green /= rhs;
+		self.blue /= rhs;
+		self.alpha /= rhs;
+	}
+}
+
+impl From<u32> for Color {
+	fn from(val: u32) -> Self {
+		Self::from_u32(val)
+	}
+}
+
+impl From<(f64, f64, f64, f64)> for Color {
+	fn from(val: (f64, f64, f64, f64)) -> Self {
+		let mut col = Color::new(val.0, val.1, val.2);
+		col.alpha = val.3;
+
+		return col;
+	}
+}
+
+impl From<[f64; 3]> for Color {
+	fn from(val: [f64; 3]) -> Self {
+		Color::new(val[0], val[1], val[2])
+	}
+}
+
+impl From<[f64; 4]> for Color {
+	fn from(val: [f64; 4]) -> Self {
+		let mut col = Color::new(val[0], val[1], val[2]);
+		col.alpha = val[3];
+
+		return col;
+	}
+}
+
+impl From<XYZ> for Color {
+	fn from(val: XYZ) -> Self {
+		val.to_color(crate::consts::SYSTEM_CIERGB)
+			.expect("Couldn't convert to color")
+	}
+}
+
+impl Into<u32> for Color {
+	fn into(self) -> u32 {
+		self.to_u32()
+	}
+}
+
+impl Into<(f64, f64, f64, f64)> for Color {
+	fn into(self) -> (f64, f64, f64, f64) {
+		(self.red, self.green, self.red, self.alpha)
+	}
+}
+
+impl Into<[f64; 3]> for Color {
+	fn into(self) -> [f64; 3] {
+		[self.red, self.green, self.blue]
+	}
+}
+
+impl Into<[f64; 4]> for Color {
+	fn into(self) -> [f64; 4] {
+		[self.red, self.green, self.blue, self.alpha]
+	}
+}
+
 impl fmt::Display for Color {
 	fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
 		write!(
 			f,
-			"Color(red={}, green={}, blue={}, alpha={})",
+			"rgba({}, {}, {}, {})",
 			self.red, self.green, self.blue, self.alpha
 		)?;
 		return Ok(());
@@ -205,6 +310,20 @@ mod tests {
 			String::from("#FFFF00FF"),
 			col.to_hex_code(true).to_uppercase()
 		);
+	}
+
+	#[test]
+	fn impl_std_traits() {
+		let input: u32 = 0xFF2340;
+		let output: u32 = Color::from(input).into();
+		assert_eq!(output, input);
+	}
+
+	#[test]
+	fn can_constrain_into_gamut() {
+		let col = Color::new(0.0, 0.5, -2.5);
+		let constrained = col.constrain();
+		assert!(constrained.in_gamut());
 	}
 }
 

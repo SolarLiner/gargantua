@@ -32,6 +32,15 @@ pub const SYSTEM_SRGB: ColorSystem = ColorSystem {
 	gamma: 2.4,
 };
 
+#[allow(dead_code)]
+pub const SYSTEM_CIERGB: ColorSystem = ColorSystem {
+	red: XYChroma { x: 0.64, y: 0.32 },
+	green: XYChroma { x: 0.3, y: 0.6 },
+	blue: XYChroma { x: 0.15, y: 0.06 },
+	white: ILLUMINANT_E,
+	gamma: 2.4,
+};
+
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub struct ColorSystem {
 	pub red: XYChroma,
