@@ -22,6 +22,12 @@ impl Iterator for DimIterator<u32> {
 		if self.done {
 			return None;
 		}
+
+		if self.width == 0 || self.height == 0 {
+			self.done = true;
+			return None;
+		}
+
 		if !self.started {
 			self.started = true;
 			return Some((self.sx, self.sy));
@@ -135,5 +141,11 @@ mod tests {
 			it.collect::<Vec<(u32, u32)>>(),
 			vec![(3, 3), (4, 3), (3, 4), (4, 4)]
 		);
+	}
+
+	#[test]
+	fn dimiterator_empty() {
+		let mut it = DimIterator::new(0, 0);
+		assert_eq!(it.next(), None);
 	}
 }
