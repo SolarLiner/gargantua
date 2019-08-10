@@ -1,10 +1,14 @@
+#![macro_use]
+extern crate approx;
+
 pub mod physics;
 pub mod raytrace;
-pub mod texture;
 pub mod schwardzchild;
+pub mod texture;
 mod utils;
 
 pub use physics::Particle;
-pub use raytrace::{Ray, Scene, Sphere, Intersectable};
+pub use raytrace::{Camera, Intersectable, Ray, Scene, Sphere};
+pub use raytrace::render::render;
+pub use schwardzchild::{GRParticle, GRScene};
 pub use texture::{Texture, TextureFiltering, TextureMode};
-pub use schwardzchild::{GRScene, GRParticle};

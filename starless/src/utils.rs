@@ -1,6 +1,7 @@
 use color::Color;
 use image::{Pixel, Rgba};
 use rayon::prelude::{IntoParallelIterator, ParallelIterator};
+use nalgebra::Vector3;
 
 use std::fmt::{Debug, Display, Formatter};
 
@@ -9,6 +10,8 @@ pub struct DimIterator<T> {
 	height: T,
 	x: T,
 	y: T,
+	sx: T,
+	sy: T,
 	done: bool,
 }
 
@@ -18,7 +21,7 @@ impl Iterator for DimIterator<u32> {
 		if self.done {
 			return None;
 		}
-		let res = Some((self.x, self.y));
+		let res = Some((self.sx + self.x, self.sy + self.y));
 
 		if self.x + 1 == self.width {
 			if self.y + 1 == self.height {
@@ -55,25 +58,27 @@ impl<T: Debug> Debug for DimIterator<T> {
 	}
 }
 
-impl<T> DimIterator<T> {
+impl<T: Default> DimIterator<T> {
 	pub fn create(width: T, height: T, x: T, y: T) -> Self {
 		Self {
 			width,
 			height,
-			x,
-			y,
+			x: T::default(),
+			y: T::default(),
+			sx: x,
+			sy: y,
 			done: false,
 		}
 	}
-}
 
-impl<T: Default> DimIterator<T> {
 	pub fn new(width: T, height: T) -> Self {
 		Self {
 			width,
 			height,
 			x: T::default(),
 			y: T::default(),
+			sx: T::default(),
+			sy: T::default(),
 			done: false,
 		}
 	}
@@ -96,6 +101,14 @@ pub fn color_to_rgba(col: &Color) -> Rgba<u8> {
 	)
 }
 
+pub fn cartesian_to_spherical(vec: &Vector3<f64>) -> (f64, f64, f64) {
+	let r = vec.dot(vec).sqrt();
+	let phi = vec.y.atan2(vec.x);
+	let theta = (vec.z / r).acos();
+
+	(r, theta, phi)
+}
+
 #[cfg(test)]
 mod tests {
 	use crate::utils::DimIterator;
@@ -106,6 +119,16 @@ mod tests {
 		assert_eq!(
 			it.collect::<Vec<(u32, u32)>>(),
 			vec![(0, 0), (1, 0), (0, 1), (1, 1)]
+		);
+	}
+
+	#[test]
+	fn dimiterator_with_xy() {
+		let it = DimIterator::create(2, 2, 3, 3);
+
+		assert_eq!(
+			it.collect::<Vec<(u32, u32)>>(),
+			vec![(3, 3), (4, 3), (3, 4), (4, 4)]
 		);
 	}
 }

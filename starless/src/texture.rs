@@ -1,6 +1,6 @@
 
-use color::color::Color;
-use color::gamut::SYSTEM_SRGB;
+use color::Color;
+use color::consts::SYSTEM_SRGB;
 use image::{open, DynamicImage, GenericImageView, Pixel, Rgba};
 use nalgebra::Vector2;
 
