@@ -1,7 +1,7 @@
 use color::Color;
 use image::{Pixel, Rgba};
-use rayon::prelude::{IntoParallelIterator, ParallelIterator};
 use nalgebra::Vector3;
+use rayon::prelude::{IntoParallelIterator, ParallelIterator};
 
 use std::fmt::{Debug, Display, Formatter};
 
@@ -12,6 +12,7 @@ pub struct DimIterator<T> {
 	y: T,
 	sx: T,
 	sy: T,
+	started: bool,
 	done: bool,
 }
 
@@ -21,20 +22,22 @@ impl Iterator for DimIterator<u32> {
 		if self.done {
 			return None;
 		}
-		let res = Some((self.sx + self.x, self.sy + self.y));
-
-		if self.x + 1 == self.width {
-			if self.y + 1 == self.height {
-				self.done = true;
-				return res;
-			}
-			self.y += 1;
-			self.x = 0;
-		} else {
-			self.x += 1;
+		if !self.started {
+			self.started = true;
+			return Some((self.sx, self.sy));
 		}
 
-		return res;
+		self.x += 1;
+		if self.x >= self.width {
+			self.x = 0;
+			self.y += 1;
+			if self.y >= self.height {
+				self.done = true;
+				return None;
+			}
+		}
+
+		return Some((self.sx + self.x, self.sy + self.y));
 	}
 }
 
@@ -67,6 +70,7 @@ impl<T: Default> DimIterator<T> {
 			y: T::default(),
 			sx: x,
 			sy: y,
+			started: false,
 			done: false,
 		}
 	}
@@ -79,6 +83,7 @@ impl<T: Default> DimIterator<T> {
 			y: T::default(),
 			sx: T::default(),
 			sy: T::default(),
+			started: false,
 			done: false,
 		}
 	}
