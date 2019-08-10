@@ -4,9 +4,9 @@ mod gamut;
 pub mod xyz;
 
 pub use self::color::Color;
-pub use xyz::XYZ;
+pub use blackbody::{blackbody_spectrum, spectrum_to_xyz};
 pub use gamut::{ColorSystem, XYChroma};
-
+pub use xyz::XYZ;
 
 pub mod consts {
 	pub use crate::gamut::SYSTEM_SRGB;
