@@ -98,9 +98,10 @@ pub fn spectrum_to_xyz(f: &Fn(f64) -> f64) -> (f64, f64, f64) {
 
 		i += 1;
 	}
-	let sum = x + y + z;
+	// let sum = x + y + z;
 
-	return (x / sum, y / sum, z / sum);
+	// return (x / sum, y / sum, z / sum);
+	return (x, y, z);
 }
 
 pub fn blackbody_spectrum(temperature: f64, wavelength: f64) -> f64 {
