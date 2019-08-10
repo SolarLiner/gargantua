@@ -1,4 +1,3 @@
-
 use color::Color;
 use image::{DynamicImage, Pixel, Rgb, Rgba};
 use nalgebra::{Isometry3, Perspective3, Point3, Translation3, UnitQuaternion, Vector2, Vector3};
@@ -232,11 +231,11 @@ pub mod render {
 	use super::Renderable;
 
 	use crate::utils::{color_to_rgba, DimIterator};
-	use image::DynamicImage;
-	use rayon::prelude::*;
+	use image::{DynamicImage, GenericImageView};
+	// use rayon::prelude::*;
 	use rayon::ThreadPoolBuilder;
 
-	use std::sync::{mpsc, Arc};
+	use std::sync::{mpsc, Arc, Mutex};
 
 	type Reporter<'a> = &'a Fn(f64, String);
 
@@ -246,10 +245,9 @@ pub mod render {
 	) -> Result<DynamicImage, &'static str> {
 		let (width, height) = o.get_dimensions();
 		let num_threads = num_cpus::get().min(30); // Set an upper bound on the number of threads to not overwhelm the OS
-		let num_columns = (num_threads as f32).sqrt().ceil() as u32;
-		let num_rows = (num_threads as f64 / num_columns as f64).sqrt().ceil() as u32;
-		let chunk_width = width / num_columns;
-		let chunk_height = height / num_rows;
+		let chunk_size = 32u32;
+		let num_columns = 1 + width / chunk_size;
+		let num_rows = 1 + height / chunk_size;
 
 		let pool = ThreadPoolBuilder::new()
 			.num_threads(num_threads)
@@ -258,18 +256,28 @@ pub mod render {
 		let (tx, rx) = mpsc::channel();
 
 		let osrc = Arc::new(o);
+		let misses = Arc::new(Mutex::new(0u32));
 
 		for cy in 0..num_rows {
 			for cx in 0..num_columns {
-				let x = chunk_width * cx;
-				let y = chunk_height * cy;
+				let x = chunk_size * cx;
+				let y = chunk_size * cy;
+				let x_size = chunk_size.min(width - x);
+				let y_size = chunk_size.min(height - y);
 
 				let ttx = tx.clone();
 				let this = Arc::clone(&osrc);
+				let m = Arc::clone(&misses);
 
 				pool.spawn(move || {
-					for (x, y) in DimIterator::create(chunk_width, chunk_height, x, y) {
-						ttx.send((x, y, this.render_px(x, y)));
+					for (x, y) in DimIterator::create(x_size, y_size, x, y) {
+						match ttx.send((x, y, this.render_px(x, y))) {
+							Ok(_) => (),
+							Err(_) => {
+								let mut mref = m.lock().unwrap();
+								*mref += 1;
+							}
+						}
 					}
 				})
 			}
@@ -284,10 +292,28 @@ pub mod render {
 				let tot = width * height;
 				for (x, y, col) in rx.into_iter() {
 					if let Some(f) = r {
-						(*f)(i as f64 / tot as f64, format!("Raytracing..."))
+						if i % 40 == 0 {
+							let nm = *misses.lock().unwrap();
+							if nm > 0 {
+								(*f)(
+									i as f64 / tot as f64,
+									format!("Raytracing ({} missed/overshot pixels)...", nm),
+								);
+							} else {
+								(*f)(i as f64 / tot as f64, format!("Raytracing..."));
+							}
+						}
 					}
 					i += 1;
-					buf.put_pixel(x, y, color_to_rgba(&col));
+					if buf.in_bounds(x, y) {
+						buf.put_pixel(x, y, color_to_rgba(&col));
+					} else {
+						*misses.lock().unwrap() += 1;
+					}
+				}
+				let num_misses = *misses.lock().unwrap();
+				if num_misses > 0 {
+					println!("WARNING: Missed {} pixels", num_misses);
 				}
 				Ok(img)
 			}
