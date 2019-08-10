@@ -4,8 +4,9 @@ extern crate criterion;
 use criterion::{Criterion, ParameterizedBenchmark};
 
 use image::{DynamicImage, Pixel, Rgb};
-use nalgebra::{Translation3, Vector3};
+use nalgebra::{Translation3};
 use starless::{render, Camera, GRScene, Scene, Sphere, Texture, TextureFiltering, TextureMode};
+use starless::raytrace::{Point};
 
 use rand::Rng;
 
@@ -41,7 +42,7 @@ fn setup_scene_flat(w: u32, h: u32) -> Scene {
 		bgtex: Some(create_bg_texture()),
 		camera: Camera::new(w, h, 45.0),
 		sphere: Sphere {
-			pos: Vector3::zeros(),
+			pos: Point::new(0.0, 0.0, 0.0),
 			radius: 1.0,
 			texture: create_sphere_texture(),
 		},

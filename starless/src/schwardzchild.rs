@@ -1,12 +1,11 @@
 use crate::physics::Particle;
-use crate::raytrace::{Intersectable, Renderable, Scene, Sphere};
+use crate::raytrace::{Intersectable, Point, Renderable, Scene, Sphere, TexCoords, Vector};
 use crate::utils::cartesian_to_spherical;
 
 use color::Color;
-use nalgebra::{Translation3, UnitQuaternion, Vector2, Vector3};
+use nalgebra::{Translation3, UnitQuaternion};
 
 use std::f64;
-type Vector = Vector3<f64>;
 
 pub struct GRParticle {
 	particle: Particle,
@@ -17,7 +16,7 @@ pub struct GRParticle {
 pub struct GRScene(pub Scene, pub f64, pub u32);
 
 impl GRParticle {
-	pub fn new(pos: Vector, dt: f64) -> Self {
+	pub fn new(pos: Point, dt: f64) -> Self {
 		GRParticle {
 			particle: Particle::new(pos),
 			dt,
@@ -31,8 +30,8 @@ impl GRParticle {
 		}
 	}
 
-	pub fn intersect(&mut self, sphere: &Sphere, max_iter: u32) -> Option<Vector> {
-		let h2vec = self.particle.pos().cross(&self.particle.vel());
+	pub fn intersect(&mut self, sphere: &Sphere, max_iter: u32) -> Option<Point> {
+		let h2vec = self.particle.pos().coords.cross(&self.particle.vel());
 		let h2 = h2vec.dot(&h2vec);
 		for _ in 0..max_iter {
 			let from_sphere = self.particle.pos() - sphere.pos;
@@ -77,14 +76,14 @@ impl Renderable for GRScene {
 		);
 		return part
 			.intersect(&self.0.sphere, self.2)
-			.map(|v: Vector| {
-				let uv = self.0.sphere.texture_coords(&v);
+			.map(|pt| {
+				let uv = self.0.sphere.texture_coords(&pt);
 				return self.0.sphere.texture.uv(uv);
 			})
 			.or_else(|| {
 				let (_, theta, phi) = cartesian_to_spherical(&part.particle.vel());
 
-				let uv = Vector2::new(theta / f64::consts::PI, phi / f64::consts::FRAC_PI_2);
+				let uv = TexCoords::new(theta / f64::consts::PI, phi / f64::consts::FRAC_PI_2);
 
 				return Some(bg.uv(uv));
 			})
@@ -107,9 +106,9 @@ mod tests {
 	use super::GRScene;
 
 	use crate::raytrace::render::render;
+	use crate::raytrace::{Point};
 	use crate::{Camera, Scene, Sphere, Texture, TextureFiltering, TextureMode};
 	use image::{DynamicImage, Pixel, Rgb};
-	use nalgebra::Vector3;
 
 	#[test]
 	fn can_render_schwardzchild() {
@@ -125,7 +124,7 @@ mod tests {
 			Scene {
 				camera: Camera::new(30, 30, 10.0),
 				sphere: Sphere {
-					pos: Vector3::new(0.0, 0.0, -4.0),
+					pos: Point::new(0.0, 0.0, -4.0),
 					radius: 1.0,
 					texture: Texture(img, TextureFiltering::Nearest, TextureMode::Clamp),
 				},

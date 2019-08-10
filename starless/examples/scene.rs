@@ -1,8 +1,8 @@
 use image::{DynamicImage, Pixel, Rgb};
-use nalgebra::{Translation3, Vector3};
+use nalgebra::{Translation3};
 
 use starless::raytrace::render::render;
-use starless::raytrace::{Camera, Scene, Sphere};
+use starless::raytrace::{Camera, Scene, Sphere, Point};
 use starless::texture::{Texture, TextureFiltering, TextureMode};
 
 fn main() {
@@ -25,7 +25,7 @@ fn main() {
     let mut scn = Scene {
         camera: Camera::new(500, 500, 45.0),
         sphere: Sphere {
-            pos: Vector3::zeros(),
+            pos: Point::new(0.0, 0.0, 0.0),
             radius: 1.0,
             texture: Texture(texture, TextureFiltering::Nearest, TextureMode::Repeat),
         },

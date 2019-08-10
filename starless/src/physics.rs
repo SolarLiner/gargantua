@@ -1,17 +1,14 @@
-use nalgebra::Vector3;
-use crate::raytrace::Ray;
-
-type Vector = Vector3<f64>;
+use crate::raytrace::{Point, Vector, Ray};
 
 #[derive(Clone, Debug)]
 pub struct Particle {
-	pos: Vector,
+	pos: Point,
 	vel: Vector,
 	acc: Vector,
 }
 
 impl Particle {
-	pub fn new(pos: Vector) -> Self {
+	pub fn new(pos: Point) -> Self {
 		Self {
 			pos,
 			vel: Vector::zeros(),
@@ -37,7 +34,7 @@ impl Particle {
 		self.acc = Vector::zeros();
 	}
 
-	pub fn pos(&self) -> Vector {
+	pub fn pos(&self) -> Point {
 		self.pos
 	}
 
@@ -53,9 +50,13 @@ impl Particle {
 impl Default for Particle {
 	fn default() -> Self {
 		Particle {
-			pos: Vector::zeros(),
+			pos: pt_zero(),
 			vel: Vector::zeros(),
 			acc: Vector::zeros(),
 		}
 	}
+}
+
+fn pt_zero() -> Point {
+	Point::new(0.0, 0.0, 0.0)
 }

@@ -1,13 +1,12 @@
 use image::{DynamicImage, Pixel, Rgb};
-use nalgebra::{Translation3, Vector3};
+use nalgebra::Translation3;
 use regex::Regex;
 
 use starless::raytrace::render::render;
+use starless::raytrace::{Point};
 use starless::{Camera, GRScene, Scene, Sphere, Texture, TextureFiltering, TextureMode};
 
 use std::{f64, u32};
-
-type Vector = Vector3<f64>;
 
 enum SpaceTime {
 	Flat,
@@ -31,7 +30,7 @@ fn setup_scene_flat(w: u32, h: u32) -> Scene {
 	let mut scn = Scene {
 		camera: Camera::new(w, h, 10.0),
 		sphere: Sphere {
-			pos: Vector::zeros(),
+			pos: Point::new(0.0, 0.0, 0.0),
 			radius: 1.0,
 			texture: create_sphere_texture(),
 		},

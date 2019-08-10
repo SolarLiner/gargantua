@@ -6,18 +6,19 @@ use std::f64;
 use crate::texture::{Texture, TextureFiltering, TextureMode};
 use crate::utils::{cartesian_to_spherical};
 
-type Vector = Vector3<f64>;
-type TexCoords = Vector2<f64>;
+pub type Point = Point3<f64>;
+pub type Vector = Vector3<f64>;
+pub type TexCoords = Vector2<f64>;
 
 #[derive(Clone, Debug)]
 pub struct Ray {
-	pub origin: Vector,
+	pub origin: Point,
 	pub direction: Vector,
 }
 
 #[derive(Clone)]
 pub struct Sphere {
-	pub pos: Vector,
+	pub pos: Point,
 	pub radius: f64,
 	pub texture: Texture,
 }
@@ -39,26 +40,13 @@ pub struct Scene {
 
 pub trait Intersectable {
 	fn intersect(&self, ray: &Ray) -> Option<f64>;
-	fn surface_normal(&self, hit: &Vector) -> Vector;
-	fn texture_coords(&self, hit: &Vector) -> TexCoords;
+	fn surface_normal(&self, hit: &Point) -> Vector;
+	fn texture_coords(&self, hit: &Point) -> TexCoords;
 }
 
 pub trait Renderable {
 	fn render_px(&self, x: u32, y: u32) -> Color;
 	fn get_dimensions(&self) -> (u32, u32);
-}
-
-impl Ray {
-	pub fn create_prime(width: u32, height: u32, fov: f64, x: u32, y: u32) -> Self {
-		let aspect_ratio = (width as f64) / (height as f64);
-		let fov_adjust = (fov.to_radians() / 2.0).tan();
-		let sensor_x = (((x as f64 + 0.5) / width as f64) * 2.0 - 1.0) * aspect_ratio;
-		let sensor_y = 1.0 - ((y as f64 + 0.5) / height as f64) * 2.0;
-		return Ray {
-			origin: Vector::zeros(),
-			direction: Vector::new(sensor_x * fov_adjust, sensor_y * fov_adjust, -1.0).normalize(),
-		};
-	}
 }
 
 impl Intersectable for Sphere {
@@ -86,10 +74,10 @@ impl Intersectable for Sphere {
 			return Some(dist);
 		}
 	}
-	fn surface_normal(&self, hit: &Vector) -> Vector {
+	fn surface_normal(&self, hit: &Point) -> Vector {
 		(*hit - self.pos).normalize()
 	}
-	fn texture_coords(&self, hit: &Vector) -> TexCoords {
+	fn texture_coords(&self, hit: &Point) -> TexCoords {
 		let dir = *hit - self.pos;
 		let r = dir.dot(&dir).sqrt();
 		let phi = dir.y.atan2(dir.x);
@@ -108,36 +96,48 @@ impl Camera {
 		}
 	}
 
-	pub fn transform(&self, vec: &Vector) -> Vector {
-		let pt = Point3::from(*vec);
-		let transformed = self
+	pub fn to_local_pt(&self, pt: &Point) -> Point {
+		self
 			.perspective
-			.project_point(&self.isometry.transform_point(&pt));
-
-		return transformed.coords;
+			.project_point(&self.isometry.transform_point(&pt))
 	}
 
-	pub fn rotate(&self, vec: &Vector) -> Vector {
+	pub fn to_local_vec(&self, vec: &Vector) -> Vector {
 		self.perspective
 			.project_vector(&self.isometry.transform_vector(vec))
 	}
 
-	pub fn transform_ray(&self, ray: &Ray) -> Ray {
-		let origin = self.transform(&ray.origin);
-		let direction = self.rotate(&ray.direction);
+	pub fn to_global_pt(&self, pt: &Point) -> Point {
+		self.isometry.inverse_transform_point(&self.perspective.as_projective().inverse_transform_point(pt))
+	}
+
+	pub fn to_global_vec(&self, vec: &Vector) -> Vector {
+		self.isometry.inverse_transform_vector(&self.perspective.as_projective().inverse_transform_vector(vec))
+	}
+
+	pub fn to_local_ray(&self, ray: &Ray) -> Ray {
+		let origin = self.to_local_pt(&ray.origin);
+		let direction = self.to_local_vec(&ray.direction);
 
 		Ray { origin, direction }
 	}
 
+	pub fn to_global_ray(&self, ray: &Ray) -> Ray {
+		let origin = self.to_global_pt(&ray.origin);
+		let direction = self.to_global_vec(&ray.direction);
+
+		Ray{origin, direction}
+	}
+
 	pub fn create_primary(&self, x: u32, y: u32) -> Ray {
-		let origin = Vector::new(
+		let origin = Point::new(
 			2.0 * x as f64 / self.width as f64 - 1.0,
 			2.0 * y as f64 / self.height as f64 - 1.0,
 			0.0,
 		);
 		let direction = Vector::new(0.0, 0.0, -1.0);
 
-		self.transform_ray(&Ray { origin, direction })
+		self.to_global_ray(&Ray { origin, direction })
 	}
 
 	pub fn set_position(&mut self, pos: Translation3<f64>) {
@@ -321,11 +321,13 @@ pub mod render {
 		}
 	}
 }
-/*
+
 #[cfg(test)]
 mod tests {
 	use super::Camera;
-	use nalgebra::{Translation3, Vector3};
+	use nalgebra::{Translation3, Point3};
+
+	use approx::assert_relative_eq;
 
 	#[test]
 	fn camera_works() {
@@ -333,8 +335,8 @@ mod tests {
 		cam.set_position(Translation3::new(0.0, 0.0, 10.0));
 
 		assert_relative_eq!(
-			cam.transform(&Vector3::zeros()),
-			Vector3::new(0.0, 0.0, -10.0)
+			cam.to_global_pt(&Point3::new(0.0, 0.0, 0.0)),
+			Point3::new(0.0, 0.0, -10.0)
 		);
 	}
 
@@ -344,7 +346,6 @@ mod tests {
 		let ray = cam.create_primary(250, 250);
 
 		println!("{:?}", ray);
-		assert_relative_eq!(ray.origin, Vector3::new(0.0, 0.0, 0.0));
+		assert_relative_eq!(ray.origin, Point3::new(0.0, 0.0, 0.0));
 	}
 }
- */
