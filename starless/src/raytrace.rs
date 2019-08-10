@@ -1,6 +1,6 @@
 use color::Color;
 use image::{DynamicImage, Pixel, Rgb};
-use nalgebra::{Isometry3, Perspective3, Point3, Translation3, UnitQuaternion, Vector2, Vector3};
+use nalgebra::{Isometry3, Perspective3, Point2, Point3, Translation3, UnitQuaternion, Vector2, Vector3};
 use std::f64;
 
 use crate::texture::{Texture, TextureFiltering, TextureMode};
@@ -91,53 +91,21 @@ impl Camera {
 		Self {
 			width,
 			height,
-			perspective: Perspective3::new(height as f64 / width as f64, fov, 0.01, 200.0),
+			perspective: Perspective3::new(height as f64 / width as f64, fov.to_radians(), 0.01, 200.0),
 			isometry: Isometry3::identity(),
 		}
 	}
 
-	pub fn to_local_pt(&self, pt: &Point) -> Point {
-		self
-			.perspective
-			.project_point(&self.isometry.transform_point(&pt))
-	}
+	pub fn create_primary(&self, x: u32, y: u32) -> Ray {
+		let normalized = Point2::new(x as f64 / self.width as f64, y as f64 / self.height as f64);
+		let ndc_near = Point::new(normalized.x, normalized.y, -1.0);
+		let ndc_far = Point::new(normalized.x, normalized.y, 1.0);
 
-	pub fn to_local_vec(&self, vec: &Vector) -> Vector {
-		self.perspective
-			.project_vector(&self.isometry.transform_vector(vec))
-	}
-
-	pub fn to_global_pt(&self, pt: &Point) -> Point {
-		self.isometry.inverse_transform_point(&self.perspective.as_projective().inverse_transform_point(pt))
-	}
-
-	pub fn to_global_vec(&self, vec: &Vector) -> Vector {
-		self.isometry.inverse_transform_vector(&self.perspective.as_projective().inverse_transform_vector(vec))
-	}
-
-	pub fn to_local_ray(&self, ray: &Ray) -> Ray {
-		let origin = self.to_local_pt(&ray.origin);
-		let direction = self.to_local_vec(&ray.direction);
+		let origin = self.perspective.unproject_point(&ndc_near);
+		let view_far = self.perspective.unproject_point(&ndc_far);
+		let direction = (view_far - origin).normalize();
 
 		Ray { origin, direction }
-	}
-
-	pub fn to_global_ray(&self, ray: &Ray) -> Ray {
-		let origin = self.to_global_pt(&ray.origin);
-		let direction = self.to_global_vec(&ray.direction);
-
-		Ray{origin, direction}
-	}
-
-	pub fn create_primary(&self, x: u32, y: u32) -> Ray {
-		let origin = Point::new(
-			2.0 * x as f64 / self.width as f64 - 1.0,
-			2.0 * y as f64 / self.height as f64 - 1.0,
-			0.0,
-		);
-		let direction = Vector::new(0.0, 0.0, -1.0);
-
-		self.to_global_ray(&Ray { origin, direction })
 	}
 
 	pub fn set_position(&mut self, pos: Translation3<f64>) {
@@ -313,7 +281,7 @@ pub mod render {
 				}
 				let num_misses = *misses.lock().unwrap();
 				if num_misses > 0 {
-					println!("WARNING: Missed {} pixels", num_misses);
+					println!("WARNING: Missed/Overshot {} pixels", num_misses);
 				}
 				Ok(img)
 			}
@@ -325,27 +293,19 @@ pub mod render {
 #[cfg(test)]
 mod tests {
 	use super::Camera;
-	use nalgebra::{Translation3, Point3};
+	use nalgebra::{Translation3, Point3, Vector3};
 
 	use approx::assert_relative_eq;
 
 	#[test]
-	fn camera_works() {
-		let mut cam = Camera::new(500, 500, 50.0);
-		cam.set_position(Translation3::new(0.0, 0.0, 10.0));
-
-		assert_relative_eq!(
-			cam.to_global_pt(&Point3::new(0.0, 0.0, 0.0)),
-			Point3::new(0.0, 0.0, -10.0)
-		);
-	}
-
-	#[test]
 	fn camera_creates_primary() {
-		let cam = Camera::new(500, 500, 50.0);
+		let mut cam = Camera::new(500, 500, 50.0);
+		cam.set_position(Translation3::new(0.0, 0.0, -0.01));
+
 		let ray = cam.create_primary(250, 250);
 
 		println!("{:?}", ray);
-		assert_relative_eq!(ray.origin, Point3::new(0.0, 0.0, 0.0));
+		assert_relative_eq!(ray.origin, Point3::new(0.0, 0.0, 0.0), epsilon = 0.01);
+		assert_relative_eq!(ray.direction, Vector3::new(0.0, 0.0, -1.0), epsilon = 0.01);
 	}
 }
