@@ -1,4 +1,3 @@
-
 use crate::gamut::ColorSystem;
 use crate::gamut::SYSTEM_SRGB;
 use crate::xyz::XYZ;
@@ -49,10 +48,10 @@ impl Color {
 		};
 	}
 	pub fn to_u32(&self) -> u32 {
-		((self.alpha * 255f64) as u32) << 24
-			| ((self.red * 255f64) as u32) << 16
-			| ((self.green * 255f64) as u32) << 8
-			| ((self.blue * 255f64) as u32)
+		((clamp(self.alpha, 0.0, 1.0) * 255f64) as u32) << 24
+			| ((clamp(self.red, 0.0, 1.0) * 255f64) as u32) << 16
+			| ((clamp(self.green, 0.0, 1.0) * 255f64) as u32) << 8
+			| ((clamp(self.blue, 0.0, 1.0) * 255f64) as u32)
 	}
 	pub fn to_hex_code(&self, alpha: bool) -> String {
 		if alpha {
@@ -88,11 +87,10 @@ impl Color {
 		return self.clone();
 	}
 	pub fn normalize(&self) -> Self {
-		let max = self.red.max(self.green).max(self.blue);
-		if max > 0f64 {
-			return self.replace_rgb(self.red / max, self.green / max, self.blue / max);
-		}
-		return self.clone();
+		let max = [self.red, self.green, self.blue]
+			.iter()
+			.fold(0.0f64, |p, c| if p.abs() < c.abs() { *c } else { p });
+		return self.replace_rgb(self.red / max, self.green / max, self.blue / max);
 	}
 	pub fn set_system(&self, sys: ColorSystem) -> Self {
 		let mut col = self.clone();
@@ -212,4 +210,14 @@ mod tests {
 
 fn lerp(x: f64, a: f64, b: f64) -> f64 {
 	(1.0 - x) * a + x * b
+}
+
+fn clamp(x: f64, min: f64, max: f64) -> f64 {
+	if x < min {
+		min
+	} else if x > max {
+		max
+	} else {
+		x
+	}
 }
