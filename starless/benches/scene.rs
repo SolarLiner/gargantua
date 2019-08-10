@@ -1,7 +1,7 @@
 #[macro_use]
 extern crate criterion;
 
-use criterion::{black_box, Criterion, ParameterizedBenchmark};
+use criterion::{Criterion, ParameterizedBenchmark};
 
 use image::{DynamicImage, Pixel, Rgb};
 use nalgebra::{Translation3, Vector3};
@@ -12,7 +12,7 @@ use rand::Rng;
 fn create_bg_texture() -> Texture {
 	let mut rng = rand::thread_rng();
 	let mut tex = DynamicImage::new_rgb8(200, 200);
-	for (x, y, p) in tex.as_mut_rgb8().unwrap().enumerate_pixels_mut() {
+	for (_x, _y, p) in tex.as_mut_rgb8().unwrap().enumerate_pixels_mut() {
 		*p = if rng.gen::<f32>() < 0.1 {
 			Rgb::from_channels(255, 255, 255, 255)
 		} else {

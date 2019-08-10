@@ -1,10 +1,10 @@
 use color::Color;
-use image::{DynamicImage, Pixel, Rgb, Rgba};
+use image::{DynamicImage, Pixel, Rgb};
 use nalgebra::{Isometry3, Perspective3, Point3, Translation3, UnitQuaternion, Vector2, Vector3};
 use std::f64;
 
 use crate::texture::{Texture, TextureFiltering, TextureMode};
-use crate::utils::{cartesian_to_spherical, color_to_rgba};
+use crate::utils::{cartesian_to_spherical};
 
 type Vector = Vector3<f64>;
 type TexCoords = Vector2<f64>;

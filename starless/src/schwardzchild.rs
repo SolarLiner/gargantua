@@ -3,9 +3,7 @@ use crate::raytrace::{Intersectable, Renderable, Scene, Sphere};
 use crate::utils::cartesian_to_spherical;
 
 use color::Color;
-use image::{DynamicImage, Pixel};
 use nalgebra::{Translation3, UnitQuaternion, Vector2, Vector3};
-use rayon::prelude::*;
 
 use std::f64;
 type Vector = Vector3<f64>;
@@ -67,7 +65,6 @@ impl GRScene {
 	pub fn set_size(&mut self, width: u32, height: u32) {
 		self.0.set_size(width, height);
 	}
-
 }
 
 impl Renderable for GRScene {
@@ -109,8 +106,8 @@ fn gr_potential(pos: Vector, h2: f64) -> Vector {
 mod tests {
 	use super::GRScene;
 
-	use crate::{Camera, Sphere, Scene, Texture, TextureFiltering, TextureMode};
 	use crate::raytrace::render::render;
+	use crate::{Camera, Scene, Sphere, Texture, TextureFiltering, TextureMode};
 	use image::{DynamicImage, Pixel, Rgb};
 	use nalgebra::Vector3;
 
@@ -124,18 +121,25 @@ mod tests {
 				Rgb::from_channels(255, 255, 255, 0)
 			};
 		}
-		let scene = GRScene(Scene {
-			camera: Camera::new(30, 30, 10.0),
-			sphere: Sphere {
-				pos: Vector3::new(0.0, 0.0, -4.0),
-				radius: 1.0,
-				texture: Texture(img, TextureFiltering::Nearest, TextureMode::Clamp),
+		let scene = GRScene(
+			Scene {
+				camera: Camera::new(30, 30, 10.0),
+				sphere: Sphere {
+					pos: Vector3::new(0.0, 0.0, -4.0),
+					radius: 1.0,
+					texture: Texture(img, TextureFiltering::Nearest, TextureMode::Clamp),
+				},
+				bgtex: None,
 			},
-			bgtex: None,
-		}, 1.0, 10);
-		render(scene, Some(&|p, msg| print!("[{}%] {}           \r", (1000.0 * p).round() / 10.0, msg)))
-			.map(|i: DynamicImage| i.save("scene_gr.png"))
-			.expect("saving file")
-			.ok();
+			1.0,
+			10,
+		);
+		render(
+			scene,
+			Some(&|p, msg| print!("[{}%] {}           \r", (1000.0 * p).round() / 10.0, msg)),
+		)
+		.map(|i: DynamicImage| i.save("scene_gr.png"))
+		.expect("saving file")
+		.ok();
 	}
 }

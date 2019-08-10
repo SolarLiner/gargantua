@@ -1,7 +1,7 @@
 
 use color::Color;
 use color::consts::SYSTEM_SRGB;
-use image::{open, DynamicImage, GenericImageView, Pixel, Rgba};
+use image::{open, DynamicImage, GenericImageView, Pixel};
 use nalgebra::Vector2;
 
 use crate::utils::rgba_to_color;

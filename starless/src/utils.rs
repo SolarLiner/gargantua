@@ -1,7 +1,7 @@
 use color::Color;
 use image::{Pixel, Rgba};
 use nalgebra::Vector3;
-use rayon::prelude::{IntoParallelIterator, ParallelIterator};
+
 
 use std::fmt::{Debug, Display, Formatter};
 
@@ -81,6 +81,7 @@ impl<T: Default> DimIterator<T> {
 		}
 	}
 
+	#[allow(dead_code)]
 	pub fn new(width: T, height: T) -> Self {
 		Self {
 			width,
