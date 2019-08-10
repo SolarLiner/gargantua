@@ -1,6 +1,6 @@
 use color::Color;
 use image::{DynamicImage, Pixel, Rgb};
-use nalgebra::{Isometry3, Perspective3, Point2, Point3, Translation3, UnitQuaternion, Vector2, Vector3};
+use nalgebra::{Isometry3, Perspective3, Point2, Point3, Translation3, UnitQuaternion, Vector2, Vector3, Unit};
 use std::f64;
 
 use crate::texture::{Texture, TextureFiltering, TextureMode};
@@ -13,7 +13,7 @@ pub type TexCoords = Vector2<f64>;
 #[derive(Clone, Debug)]
 pub struct Ray {
 	pub origin: Point,
-	pub direction: Vector,
+	pub direction: Unit<Vector>,
 }
 
 #[derive(Clone)]
@@ -40,7 +40,7 @@ pub struct Scene {
 
 pub trait Intersectable {
 	fn intersect(&self, ray: &Ray) -> Option<f64>;
-	fn surface_normal(&self, hit: &Point) -> Vector;
+	fn surface_normal(&self, hit: &Point) -> Unit<Vector>;
 	fn texture_coords(&self, hit: &Point) -> TexCoords;
 }
 
@@ -74,15 +74,13 @@ impl Intersectable for Sphere {
 			return Some(dist);
 		}
 	}
-	fn surface_normal(&self, hit: &Point) -> Vector {
-		(*hit - self.pos).normalize()
+	fn surface_normal(&self, hit: &Point) -> Unit<Vector> {
+		Unit::new_normalize(*hit - self.pos)
 	}
 	fn texture_coords(&self, hit: &Point) -> TexCoords {
 		let dir = *hit - self.pos;
-		let r = dir.dot(&dir).sqrt();
-		let phi = dir.y.atan2(dir.x);
-		let theta = (dir.z / r).acos();
-		return TexCoords::new(theta / f64::consts::FRAC_PI_2, phi / f64::consts::PI);
+		let (_, theta, phi) = cartesian_to_spherical(&dir);
+		return TexCoords::new(theta / f64::consts::PI, 0.5 * phi / f64::consts::PI + 0.5);
 	}
 }
 
@@ -103,7 +101,7 @@ impl Camera {
 
 		let origin = self.perspective.unproject_point(&ndc_near);
 		let view_far = self.perspective.unproject_point(&ndc_far);
-		let direction = (view_far - origin).normalize();
+		let direction = Unit::new_normalize(view_far - origin);
 
 		Ray { origin, direction }
 	}
@@ -178,13 +176,13 @@ impl Renderable for Scene {
 		let ray = self.camera.create_primary(x, y);
 		match self.sphere.intersect(&ray) {
 			Some(p) => {
-				let hit = ray.origin + ray.direction * p;
+				let hit = ray.origin + ray.direction.as_ref() * p;
 				let uv = self.sphere.texture_coords(&hit);
 				return self.sphere.texture.uv(uv);
 			}
 			None => {
 				let (_, theta, phi) = cartesian_to_spherical(&ray.direction);
-				let uv = Vector2::new(theta / f64::consts::PI, phi / f64::consts::FRAC_PI_2);
+				let uv =  TexCoords::new(theta / f64::consts::PI, 0.5 * phi / f64::consts::PI + 0.5);
 				return bgtex.uv(uv);
 			}
 		}
@@ -306,6 +304,6 @@ mod tests {
 
 		println!("{:?}", ray);
 		assert_relative_eq!(ray.origin, Point3::new(0.0, 0.0, 0.0), epsilon = 0.01);
-		assert_relative_eq!(ray.direction, Vector3::new(0.0, 0.0, -1.0), epsilon = 0.01);
+		assert_relative_eq!(ray.direction.into_inner(), Vector3::new(0.0, 0.0, -1.0), epsilon = 0.01);
 	}
 }

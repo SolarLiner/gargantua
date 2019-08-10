@@ -1,7 +1,7 @@
 [workspace]
 members = [
 	"color",
-	"starless",
-	"starless-bin",
-	# "starless-wasm"
+	"gargantua",
+	"gargantua-bin",
+	# "gargantua-wasm"
 ]

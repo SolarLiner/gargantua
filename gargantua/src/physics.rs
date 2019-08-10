@@ -19,7 +19,7 @@ impl Particle {
 	pub fn from_ray(r: &Ray) -> Self {
 		Self {
 			pos: r.origin,
-			vel: r.direction,
+			vel: r.direction.as_ref().clone(),
 			acc: Vector::zeros()
 		}
 	}

@@ -5,8 +5,8 @@ use criterion::{Criterion, ParameterizedBenchmark};
 
 use image::{DynamicImage, Pixel, Rgb};
 use nalgebra::{Translation3};
-use starless::{render, Camera, GRScene, Scene, Sphere, Texture, TextureFiltering, TextureMode};
-use starless::raytrace::{Point};
+use gargantua::{render, Camera, GRScene, Scene, Sphere, Texture, TextureFiltering, TextureMode};
+use gargantua::raytrace::{Point};
 
 use rand::Rng;
 

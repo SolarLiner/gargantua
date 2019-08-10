@@ -1,9 +1,9 @@
 use image::{DynamicImage, Pixel, Rgb};
 use nalgebra::{Translation3};
 
-use starless::raytrace::render::render;
-use starless::raytrace::{Camera, Scene, Sphere, Point};
-use starless::texture::{Texture, TextureFiltering, TextureMode};
+use gargantua::raytrace::render::render;
+use gargantua::raytrace::{Camera, Scene, Sphere, Point};
+use gargantua::texture::{Texture, TextureFiltering, TextureMode};
 
 fn main() {
     let mut texture = DynamicImage::new_rgb8(64, 64);

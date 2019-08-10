@@ -8,7 +8,7 @@
       "name": "(gdb) Launch",
       "type": "cppdbg",
       "request": "launch",
-      "program": "${workspaceFolder}/target/debug/starless-bin",
+      "program": "${workspaceFolder}/target/debug/gargantua-bin",
       "args": [],
       "stopAtEntry": false,
       "cwd": "${workspaceFolder}",

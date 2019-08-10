@@ -2,9 +2,9 @@ use image::{DynamicImage, Pixel, Rgb};
 use nalgebra::Translation3;
 use regex::Regex;
 
-use starless::raytrace::render::render;
-use starless::raytrace::{Point};
-use starless::{Camera, GRScene, Scene, Sphere, Texture, TextureFiltering, TextureMode};
+use gargantua::raytrace::render::render;
+use gargantua::raytrace::{Point};
+use gargantua::{Camera, GRScene, Scene, Sphere, Texture, TextureFiltering, TextureMode};
 
 use std::{f64, u32};
 
@@ -47,7 +47,7 @@ fn setup_scene_gr(w: u32, h: u32) -> GRScene {
 
 fn main() {
 	let size_re = Regex::new(r"(\d+)x(\d+)").expect("Couldn't create regex");
-	let matches = clap::App::new("Starless (now Rusty!)")
+	let matches = clap::App::new("gargantua (now Rusty!)")
 		.version("0.1")
 		.author("Nathan Graule <solarliner@gmail.com>")
 		.about("Render black hole in Flat (boring) or Schwardzchild (awesome) spacetime.")

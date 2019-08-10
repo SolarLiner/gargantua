@@ -1,12 +1,12 @@
 [package]
-name = "starless-bin"
+name = "gargantua-bin"
 version = "0.1.0"
 authors = ["Nathan Graule <solarliner@gmail.com>"]
 edition = "2018"
 
 [dependencies]
 color = { path = "../color" }
-starless = { path = "../starless" }
+gargantua = { path = "../gargantua" }
 image = "0.22.1"
 nalgebra = "0.18.0"
 ncurses = "5.99.0"
