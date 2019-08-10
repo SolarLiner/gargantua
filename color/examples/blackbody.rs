@@ -25,7 +25,7 @@ fn main() {
     encoder.set_depth(png::BitDepth::Eight);
 
     csv_writer
-        .write_record(&["Temp", "X", "Y", "Z", "R", "G", "B"])
+        .write_record(&["Temp", "X", "Y", "Z", "x", "y", "R", "G", "B"])
         .expect("Couldn't write CSV headers");
     let mut png_data: Vec<u8> = Vec::new();
     for (t, xyz) in colors {
@@ -33,6 +33,7 @@ fn main() {
             .to_srgb()
             .expect("Couldn't convert XYZ to Color")
             .normalize();
+        let (chroma, _) = xyz.to_chromaticity();
         let (r, g, b) = color_to_u8(col.clone());
         png_data.push(r);
         png_data.push(g);
@@ -43,6 +44,8 @@ fn main() {
                 xyz.X.to_string(),
                 xyz.Y.to_string(),
                 xyz.Z.to_string(),
+                chroma.x.to_string(),
+                chroma.y.to_string(),
                 col.red.to_string(),
                 col.green.to_string(),
                 col.blue.to_string(),
