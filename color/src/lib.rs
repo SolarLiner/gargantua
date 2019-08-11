@@ -9,7 +9,8 @@ pub use gamut::{ColorSystem, XYChroma};
 pub use xyz::XYZ;
 
 pub mod consts {
-	pub use crate::gamut::{SYSTEM_SRGB, SYSTEM_CIERGB};
+	pub use crate::blackbody::CIE_COLOR_MATCH;
 	pub use crate::gamut::{ILLUMINANT_C, ILLUMINANT_D65, ILLUMINANT_E};
+	pub use crate::gamut::{SYSTEM_CIERGB, SYSTEM_SRGB};
 
 }

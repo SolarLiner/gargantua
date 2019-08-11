@@ -1,6 +1,6 @@
 // Port of the blackbody calculations from http://www.fourmilab.ch/documents/specrend/ - more precisely their C tool
 
-const CIE_COLOR_MATCH: [[f64; 3]; 81] = [
+pub const CIE_COLOR_MATCH: [[f64; 3]; 81] = [
 	[0.0014, 0.0000, 0.0065],
 	[0.0022, 0.0001, 0.0105],
 	[0.0042, 0.0001, 0.0201],
