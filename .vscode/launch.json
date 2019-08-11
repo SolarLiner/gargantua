@@ -12,7 +12,12 @@
       "args": [],
       "stopAtEntry": false,
       "cwd": "${workspaceFolder}",
-      "environment": [],
+      "environment": [
+        {
+          "name": "RAYON_NUM_THREADS",
+          "value": "1"
+        }
+      ],
       "externalConsole": false,
       "MIMode": "gdb",
       "setupCommands": [
@@ -21,7 +26,8 @@
           "text": "-enable-pretty-printing",
           "ignoreFailures": true
         }
-      ]
+      ],
+      "preLaunchTask": "build"
     }
   ]
 }
