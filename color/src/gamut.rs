@@ -180,6 +180,42 @@ impl XYChroma {
 	}
 }
 
+impl Add<XYChroma> for XYChroma {
+	type Output = Self;
+
+	fn add(self, rhs: XYChroma) -> Self {
+		Self {
+			x: self.x + rhs.x,
+			y: self.y + rhs.y,
+		}
+	}
+}
+
+impl Sub<XYChroma> for XYChroma {
+	type Output = Self;
+
+	fn sub(self, rhs: XYChroma) -> Self {
+		Self {
+			x: self.x - rhs.x,
+			y: self.y - rhs.y,
+		}
+	}
+}
+
+impl AddAssign<XYChroma> for XYChroma {
+	fn add_assign(&mut self, rhs: XYChroma) {
+		self.x += rhs.x;
+		self.y += rhs.y;
+	}
+}
+
+impl SubAssign<XYChroma> for XYChroma {
+	fn sub_assign(&mut self, rhs: XYChroma) {
+		self.x += rhs.x;
+		self.y += rhs.y;
+	}
+}
+
 impl fmt::Display for XYChroma {
 	fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
 		write!(f, "XYChroma(x={}, y={})", self.x, self.y)?;
