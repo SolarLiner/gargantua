@@ -3,6 +3,7 @@ use crate::gamut::SYSTEM_SRGB;
 use crate::xyz::XYZ;
 use std::fmt;
 use std::ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Sub, SubAssign};
+use nalgebra::{Vector3, Vector4};
 
 /** Linear RGB Color structure */
 #[derive(Clone, Debug, Default, PartialEq)]
@@ -251,6 +252,21 @@ impl From<XYZ> for Color {
 	}
 }
 
+impl From<Vector3<f64>> for Color {
+	fn from(val: Vector3<f64>) -> Color {
+		Color::new(val.x, val.y, val.z)
+	}
+}
+
+impl From<Vector4<f64>> for Color {
+	fn from(val: Vector4<f64>) -> Color {
+		let mut col = Color::new(val.x, val.y, val.z);
+		col.alpha = val.w;
+
+		return col;
+	}
+}
+
 impl Into<u32> for Color {
 	fn into(self) -> u32 {
 		self.to_u32()
@@ -275,11 +291,23 @@ impl Into<[f64; 4]> for Color {
 	}
 }
 
+impl Into<Vector3<f64>> for Color {
+	fn into(self) -> Vector3<f64> {
+		Vector3::new(self.red, self.green, self.blue)
+	}
+}
+
+impl Into<Vector4<f64>> for Color {
+	fn into(self) -> Vector4<f64> {
+		Vector4::new(self.red, self.green, self.blue, self.alpha)
+	}
+}
+
 impl fmt::Display for Color {
 	fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
 		write!(
 			f,
-			"rgba({}, {}, {}, {})",
+			"rgba({:.1}, {:.1}, {:.1}, {:.1})",
 			self.red, self.green, self.blue, self.alpha
 		)?;
 		return Ok(());
