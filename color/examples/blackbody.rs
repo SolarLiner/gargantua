@@ -1,5 +1,7 @@
-use color::{Color, XYZ};
+use color::consts::CIE_COLOR_MATCH;
+use color::{Color, XYChroma, XYZ};
 use png::Encoder;
+use std::io::Write;
 
 use std::fs::File;
 use std::io::BufWriter;
@@ -28,6 +30,7 @@ fn main() {
         .write_record(&["Temp", "X", "Y", "Z", "x", "y", "R", "G", "B"])
         .expect("Couldn't write CSV headers");
     let mut png_data: Vec<u8> = Vec::new();
+    let mut plank_locus: Vec<XYChroma> = Vec::new();
     for (t, xyz) in colors {
         let col = xyz
             .to_srgb()
@@ -51,6 +54,7 @@ fn main() {
                 col.blue.to_string(),
             ])
             .expect("Couldn't add data to CSV");
+        plank_locus.push(chroma);
     }
     let png_width_len = png_data.len();
     for _ in 1..HEIGHT {
@@ -64,8 +68,42 @@ fn main() {
     csv_writer.flush().expect("Couldn't write to CSV file");
     match res {
         Ok(()) => println!("Done."),
-        Err(err) => println!("ERROR: {}", err),
+        Err(err) => eprintln!("ERROR: {}", err),
     };
+
+    if std::process::Command::new("gnuplot").spawn().map(|mut s| s.kill()).is_ok() {
+        generate_plot(csv_path).expect("Couldn't generate locus plot");
+    } else {
+        println!("Note: skipping generating plot: gnuplot not found.");
+    }
+}
+
+fn generate_plot(data_path: &Path) -> std::io::Result<()> {
+    let locus_path = Path::new("locus_data.csv");
+    let script_path = Path::new("locus.gnuplot");
+    let mut scriptw = std::io::LineWriter::new(File::create(script_path)?);
+    let mut w = csv::WriterBuilder::default().from_path(locus_path)?;
+    for (xy, lambda) in generate_spectrum_locus().iter().zip((380..780).step_by(5)) {
+        w.write_record(&[lambda.to_string(), xy.x.to_string(), xy.y.to_string()])?;
+    }
+    w.flush()?;
+
+    let script = format!("set terminal png size 1000,1000\nset output \"locus.png\"\nset grid\nset xrange [0:1]\nset yrange [0:1]\nset xlabel \"x\"\nset ylabel \"y\"\nset title \"Generated plankian locus\"\nset datafile separator \",\"\nplot \"{}\" using 5:6 with lines title \"Plankian locus\", \"{}\" using 2:3 with lines title \"Spectral locus\"\n", data_path.to_string_lossy(), locus_path.to_string_lossy());
+
+    scriptw.write(script.as_ref())?;
+    drop(scriptw);
+
+    std::process::Command::new("gnuplot")
+        .arg(script_path.as_os_str())
+        .output()?;
+    Ok(())
+}
+
+fn generate_spectrum_locus() -> Vec<XYChroma> {
+    CIE_COLOR_MATCH
+        .iter()
+        .map(|a| XYZ::from(*a).to_chromaticity().0)
+        .collect()
 }
 
 fn lin_space(start: f64, end: f64, length: usize) -> Vec<f64> {
