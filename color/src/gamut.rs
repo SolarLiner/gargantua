@@ -3,7 +3,7 @@
 use crate::color::Color;
 use crate::xyz::XYZ;
 
-use nalgebra::{Complex, Matrix3, Point2, Point3, Unit, Vector2, Vector3};
+use nalgebra::{Complex, Matrix3, Point2, Unit, Vector2, Vector3};
 
 use std::f64;
 use std::fmt;
@@ -281,7 +281,7 @@ mod tests {
 	use crate::gamut::{ColorSystem, XYChroma, ILLUMINANT_D65};
 	use crate::xyz::XYZ;
 	use approx::assert_abs_diff_eq;
-	use nalgebra::{Vector2, Vector3};
+	use nalgebra::Vector2;
 
 	#[test]
 	fn chroma_works() {
@@ -303,7 +303,7 @@ mod tests {
 			white: ILLUMINANT_D65,
 			gamma: 0.0,
 		};
-		let white_point_xyz = XYZ::chromaticity(ILLUMINANT_D65, 1.0);
+		let _white_point_xyz = XYZ::chromaticity(ILLUMINANT_D65, 1.0);
 		let xyz_red: Vector2<f64> = Color::with_system(1.0, 0.0, 0.0, system)
 			.to_xyz(None)
 			.expect("Couldn't convert to XYZ")
