@@ -70,23 +70,26 @@ impl ColorSystem {
 	pub fn to_xyz(&self, col: &Color) -> XYZ {
 		let lin_col = self.gamma_inv(col);
 		let m = self.get_matrix_to_xyz();
-		let colvec: Vector3<f64> = col.into();
+		let colvec: Vector3<f64> = lin_col.into();
 		let xyzvec = m * colvec;
 
 		XYZ {
 			X: xyzvec.x,
 			Y: xyzvec.y,
-			Z: xyzvec.z
+			Z: xyzvec.z,
 		}
 	}
 
 	pub fn desaturate(&self, col: &Color, percent: f64) -> Result<Color, &'static str> {
 		let (xy, Y) = self.to_xyz(col).to_chromaticity();
 
-		self.to_rgb(&XYZ::chromaticity(XYChroma {
-			x: lerp(percent, xy.x, self.white.x),
-			y: lerp(percent, xy.y, self.white.y)
-		}, Y))
+		self.to_rgb(&XYZ::chromaticity(
+			XYChroma {
+				x: lerp(percent, xy.x, self.white.x),
+				y: lerp(percent, xy.y, self.white.y),
+			},
+			Y,
+		))
 	}
 
 	pub fn gamma(&self, col: &Color) -> Color {

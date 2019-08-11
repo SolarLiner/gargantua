@@ -2,6 +2,9 @@ use crate::blackbody::{blackbody_spectrum, spectrum_to_xyz};
 use crate::color::Color;
 use crate::gamut::{ColorSystem, XYChroma, SYSTEM_SRGB};
 use std::fmt;
+use std::ops::{Add, AddAssign, Sub, SubAssign, Mul, MulAssign, Div, DivAssign};
+
+use nalgebra::{Vector3, Point3};
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct XYZ {
@@ -50,6 +53,110 @@ impl fmt::Display for XYZ {
 	fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
 		write!(f, "XYZ(X={}, Y={}, Z={})", self.X, self.Y, self.Z)?;
 		Ok(())
+	}
+}
+
+impl Add<XYZ> for XYZ {
+	type Output = Self;
+	fn add(self, rhs: XYZ) -> Self {
+		Self {
+			X: self.X + rhs.X,
+			Y: self.Y + rhs.Y,
+			Z: self.Z + rhs.Z,
+		}
+	}
+}
+
+impl AddAssign<XYZ> for XYZ {
+	fn add_assign(&mut self, rhs: XYZ) {
+		self.X += rhs.X;
+		self.Y += rhs.Y;
+		self.Z += rhs.Z;
+	}
+}
+
+impl Sub<XYZ> for XYZ {
+	type Output = Self;
+	fn sub(self, rhs: XYZ) -> Self {
+		Self {
+			X: self.X - rhs.X,
+			Y: self.Y - rhs.Y,
+			Z: self.Z - rhs.Z,
+		}
+	}
+}
+
+impl SubAssign<XYZ> for XYZ {
+	fn sub_assign(&mut self, rhs: XYZ) {
+		self.X -= rhs.X;
+		self.Y -= rhs.Y;
+		self.Z -= rhs.Z;
+	}
+}
+
+impl Mul<f64> for XYZ {
+	type Output = Self;
+	fn mul(self, rhs: f64) -> Self {
+		Self {
+			X: self.X * rhs,
+			Y: self.Y * rhs,
+			Z: self.Z * rhs,
+		}
+	}
+}
+
+impl MulAssign<f64> for XYZ {
+	fn mul_assign(&mut self, rhs: f64) {
+		self.X *= rhs;
+		self.Y *= rhs;
+		self.Z *= rhs;
+	}
+}
+
+impl Div<f64> for XYZ {
+	type Output = Self;
+fn div(self, rhs: f64) -> Self {
+	Self {
+		X: self.X / rhs,
+		Y: self.Y / rhs,
+		Z: self.Z / rhs,
+
+	}	}
+}
+
+impl DivAssign<f64> for XYZ {
+	fn div_assign(&mut self, rhs: f64) {
+		self.X *= rhs;
+		self.Y *= rhs;
+		self.Z *= rhs;
+	}
+}
+
+impl From<Vector3<f64>> for XYZ {
+	fn from(val: Vector3<f64>) -> Self {
+		XYZ {
+			X: val.x,
+			Y: val.y,
+			Z: val.z
+		}
+	}
+}
+
+impl From<Point3<f64>> for XYZ {
+	fn from(val: Point3<f64>) -> Self {
+		XYZ::from(val.coords)
+	}
+}
+
+impl Into<Vector3<f64>> for XYZ {
+	fn into(self) -> Vector3<f64> {
+		Vector3::new(self.X, self.Y, self.Z)
+	}
+}
+
+impl Into<Point3<f64>> for XYZ {
+	fn into(self) -> Point3<f64> {
+		Point3::new(self.X, self.Y, self.Z)
 	}
 }
 
