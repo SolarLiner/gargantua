@@ -66,7 +66,7 @@ impl Color {
 		self.system
 			.or(default_system)
 			.ok_or("No color system provided, either from the Color object or as a default")
-			.and_then(|s| s.to_xyz(self))
+			.map(|s| s.to_xyz(self))
 	}
 	pub fn replace_rgb(&self, red: f64, green: f64, blue: f64) -> Self {
 		Color {

@@ -3,10 +3,12 @@
 use crate::color::Color;
 use crate::xyz::XYZ;
 
-use nalgebra::{Matrix3, Vector3};
+use nalgebra::{Complex, Matrix3, Point2, Point3, Unit, Vector2, Vector3};
 
 use std::f64;
 use std::fmt;
+use std::ops::{Add, AddAssign, Sub, SubAssign};
+
 #[allow(dead_code)]
 pub const ILLUMINANT_D65: XYChroma = XYChroma {
 	x: 0.3127,
@@ -58,45 +60,36 @@ pub struct XYChroma {
 
 impl ColorSystem {
 	pub fn to_rgb(&self, xyz: &XYZ) -> Result<Color, &'static str> {
-		return match self
-			.get_matrix()
-			.and_then(|m| m.try_inverse().ok_or("Cannot inverse color system matrix"))
-			.map(|m| m * Vector3::new(xyz.X, xyz.Y, xyz.Z))
-		{
-			Ok(vec) => Ok(self.gamma(&Color::with_system(vec[0], vec[1], vec[2], *self))),
-			Err(err) => Err(err),
-		};
+		self.get_matrix_to_xyz()
+			.try_inverse()
+			.ok_or("Couldn't inverse XYZ to RGB matrix")
+			.map(|m| m * Vector3::new(xyz.X, xyz.Y, xyz.Z)) // TODO: Implement From and Into for XYZ
+			.map(|vec| self.gamma(&Color::with_system(vec.x, vec.y, vec.z, *self)))
 	}
 
-	pub fn to_xyz(&self, col: &Color) -> Result<XYZ, &'static str> {
+	pub fn to_xyz(&self, col: &Color) -> XYZ {
 		let lin_col = self.gamma_inv(col);
-		let xyz_vec = self
-			.get_matrix()
-			.and_then(|m| Ok(m * Vector3::new(lin_col.red, lin_col.green, lin_col.blue)));
-		return xyz_vec.map(|vec| XYZ {
-			X: vec[0],
-			Y: vec[1],
-			Z: vec[2],
-		});
+		let m = self.get_matrix_to_xyz();
+		let colvec: Vector3<f64> = col.into();
+		let xyzvec = m * colvec;
+
+		XYZ {
+			X: xyzvec.x,
+			Y: xyzvec.y,
+			Z: xyzvec.z
+		}
 	}
 
 	pub fn desaturate(&self, col: &Color, percent: f64) -> Result<Color, &'static str> {
-		let new_xy = match self.to_xyz(col).map(|xyz| xyz.to_chromaticity()) {
-			Ok((xy, Y)) => Ok((
-				XYChroma {
-					x: lerp(percent, xy.x, self.white.x),
-					y: lerp(percent, xy.y, self.white.y),
-				},
-				Y,
-			)),
-			Err(err) => Err(err),
-		};
-		return new_xy
-			.map(|(xy, Y)| XYZ::chromaticity(xy, Y))
-			.and_then(|xyz| xyz.to_color(*self));
+		let (xy, Y) = self.to_xyz(col).to_chromaticity();
+
+		self.to_rgb(&XYZ::chromaticity(XYChroma {
+			x: lerp(percent, xy.x, self.white.x),
+			y: lerp(percent, xy.y, self.white.y)
+		}, Y))
 	}
 
-	fn gamma(&self, col: &Color) -> Color {
+	pub fn gamma(&self, col: &Color) -> Color {
 		let mut new_col = col.clone();
 		new_col.red = gamma(self.gamma, col.red);
 		new_col.green = gamma(self.gamma, col.green);
@@ -105,7 +98,7 @@ impl ColorSystem {
 		return new_col;
 	}
 
-	fn gamma_inv(&self, col: &Color) -> Color {
+	pub fn gamma_inv(&self, col: &Color) -> Color {
 		let mut new_col = col.clone();
 		new_col.red = gamma_inv(self.gamma, col.red);
 		new_col.green = gamma_inv(self.gamma, col.green);
@@ -114,32 +107,12 @@ impl ColorSystem {
 		return new_col;
 	}
 
-	fn get_matrix(&self) -> Result<Matrix3<f64>, &'static str> {
-		let (xr, yr, zr) = self.red.get_matrix_comp();
-		let (xg, yg, zg) = self.green.get_matrix_comp();
-		let (xb, yb, zb) = self.blue.get_matrix_comp();
+	fn get_matrix_to_xyz(&self) -> Matrix3<f64> {
+		let red: Unit<Vector3<f64>> = self.red.into();
+		let green: Unit<Vector3<f64>> = self.green.into();
+		let blue: Unit<Vector3<f64>> = self.blue.into();
 
-		let mat = Matrix3::new(xr, xg, xb, yr, yg, yb, zr, zg, zb);
-		let ref_white = XYZ::chromaticity(self.white, 1.0);
-		let sv: Option<Vector3<f64>> = mat
-			.try_inverse()
-			.map(|m| m * Vector3::new(ref_white.X, ref_white.Y, ref_white.Z));
-		return match sv {
-			Some(s) => {
-				let mut mat2 = mat.clone();
-				mat2[(0, 0)] *= s[0];
-				mat2[(0, 1)] *= s[1];
-				mat2[(0, 2)] *= s[2];
-				mat2[(1, 0)] *= s[0];
-				mat2[(1, 1)] *= s[1];
-				mat2[(1, 2)] *= s[2];
-				mat2[(2, 0)] *= s[0];
-				mat2[(2, 1)] *= s[1];
-				mat2[(2, 2)] *= s[2];
-				Ok(mat2)
-			}
-			None => Err("Cannot transpose XYZ component matrix"),
-		};
+		Matrix3::from_columns(&[red.into_inner(), green.into_inner(), blue.into_inner()])
 	}
 }
 
@@ -157,12 +130,18 @@ impl fmt::Display for ColorSystem {
 impl Default for ColorSystem {
 	fn default() -> Self {
 		ColorSystem {
-			red: XYChroma { x: 0.0, y: 0.001 },
-			green: XYChroma { x: 1.0, y: 0.001 },
-			blue: XYChroma { x: 1.0, y: 0.001 },
+			red: XYChroma { x: 0.0, y: 0.0 },
+			green: XYChroma { x: 1.0, y: 0.0 },
+			blue: XYChroma { x: 1.0, y: 0.0 },
 			white: ILLUMINANT_D65,
 			gamma: 1.0,
 		}
+	}
+}
+
+impl Into<Matrix3<f64>> for ColorSystem {
+	fn into(self) -> Matrix3<f64> {
+		self.get_matrix_to_xyz()
 	}
 }
 
@@ -216,6 +195,51 @@ impl SubAssign<XYChroma> for XYChroma {
 	}
 }
 
+impl From<Vector2<f64>> for XYChroma {
+	fn from(val: Vector2<f64>) -> Self {
+		Self { x: val.x, y: val.y }
+	}
+}
+
+impl From<Unit<Vector3<f64>>> for XYChroma {
+	fn from(val: Unit<Vector3<f64>>) -> Self {
+		Self { x: val.x, y: val.y }
+	}
+}
+
+impl From<Point2<f64>> for XYChroma {
+	fn from(val: Point2<f64>) -> Self {
+		Self::from(val.coords)
+	}
+}
+
+impl From<Complex<f64>> for XYChroma {
+	fn from(val: Complex<f64>) -> Self {
+		Self {
+			x: val.re,
+			y: val.im,
+		}
+	}
+}
+
+impl Into<Vector2<f64>> for XYChroma {
+	fn into(self) -> Vector2<f64> {
+		Vector2::new(self.x, self.y)
+	}
+}
+
+impl Into<Unit<Vector3<f64>>> for XYChroma {
+	fn into(self) -> Unit<Vector3<f64>> {
+		Unit::new_unchecked(Vector3::new(self.x, self.y, self.get_z()))
+	}
+}
+
+impl Into<Complex<f64>> for XYChroma {
+	fn into(self) -> Complex<f64> {
+		Complex::new(self.x, self.y)
+	}
+}
+
 impl fmt::Display for XYChroma {
 	fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
 		write!(f, "XYChroma(x={}, y={})", self.x, self.y)?;
@@ -245,7 +269,6 @@ fn gamma_inv(exp: f64, value: f64) -> f64 {
 	}
 }
 
-
 #[cfg(test)]
 mod tests {
 	use crate::color::Color;
@@ -273,16 +296,22 @@ mod tests {
 			gamma: 0.0,
 		};
 		let white_point_xyz = XYZ::chromaticity(ILLUMINANT_D65, 1.0);
+		let xyz_red = Color::with_system(1.0, 0.0, 0.0, system)
+			.to_xyz(None)
+			.expect("Couldn't convert to XYZ");
+		let xyz_green = Color::with_system(0.0, 1.0, 0.0, system)
+			.to_xyz(None)
+			.expect("Couldn't convert to XYZ");
+
+		println!("XYZ red: {:?}", xyz_red);
+		println!("XYZ green: {:?}", xyz_green);
+		assert_eq!(xyz_red.to_chromaticity().0, red);
+		assert_eq!(xyz_green.to_chromaticity().0, green);
 		assert_eq!(
-			system.to_rgb(&XYZ::chromaticity(red, 1.0)).unwrap(),
-			Color::new(1.0, 0.0, 0.0)
-		);
-		assert_eq!(
-			system
-				.to_rgb(&XYZ::chromaticity(green, 1.0))
-				.unwrap()
-				.normalize(),
-			Color::new(0.0, 1.0, 0.0)
+			XYZ::chromaticity(blue, 1.0)
+				.to_color(system)
+				.expect("Couldn't convert to Color"),
+			Color::new(0.0, 0.0, 1.0)
 		);
 		assert_eq!(
 			system.to_rgb(&white_point_xyz).unwrap().normalize(),
