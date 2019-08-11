@@ -2,9 +2,9 @@ use crate::blackbody::{blackbody_spectrum, spectrum_to_xyz};
 use crate::color::Color;
 use crate::gamut::{ColorSystem, XYChroma, SYSTEM_SRGB};
 use std::fmt;
-use std::ops::{Add, AddAssign, Sub, SubAssign, Mul, MulAssign, Div, DivAssign};
+use std::ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Sub, SubAssign};
 
-use nalgebra::{Vector3, Point3};
+use nalgebra::{Point3, Vector3};
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct XYZ {
@@ -115,13 +115,13 @@ impl MulAssign<f64> for XYZ {
 
 impl Div<f64> for XYZ {
 	type Output = Self;
-fn div(self, rhs: f64) -> Self {
-	Self {
-		X: self.X / rhs,
-		Y: self.Y / rhs,
-		Z: self.Z / rhs,
-
-	}	}
+	fn div(self, rhs: f64) -> Self {
+		Self {
+			X: self.X / rhs,
+			Y: self.Y / rhs,
+			Z: self.Z / rhs,
+		}
+	}
 }
 
 impl DivAssign<f64> for XYZ {
@@ -132,12 +132,22 @@ impl DivAssign<f64> for XYZ {
 	}
 }
 
+impl From<[f64; 3]> for XYZ {
+	fn from(val: [f64; 3]) -> Self {
+		Self {
+			X: val[0],
+			Y: val[1],
+			Z: val[2],
+		}
+	}
+}
+
 impl From<Vector3<f64>> for XYZ {
 	fn from(val: Vector3<f64>) -> Self {
 		XYZ {
 			X: val.x,
 			Y: val.y,
-			Z: val.z
+			Z: val.z,
 		}
 	}
 }
@@ -145,6 +155,12 @@ impl From<Vector3<f64>> for XYZ {
 impl From<Point3<f64>> for XYZ {
 	fn from(val: Point3<f64>) -> Self {
 		XYZ::from(val.coords)
+	}
+}
+
+impl Into<[f64; 3]> for XYZ {
+	fn into(self) -> [f64; 3] {
+		[self.X, self.Y, self.Z]
 	}
 }
 
