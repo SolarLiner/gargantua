@@ -63,7 +63,10 @@ impl ColorSystem {
 		self.get_matrix_to_xyz()
 			.try_inverse()
 			.ok_or("Couldn't inverse XYZ to RGB matrix")
-			.map(|m| m * Vector3::new(xyz.X, xyz.Y, xyz.Z)) // TODO: Implement From and Into for XYZ
+			.map(|m| {
+				let v: Vector3<f64> = xyz.clone().into();
+				m * v
+			})
 			.map(|vec| self.gamma(&Color::with_system(vec.x, vec.y, vec.z, *self)))
 	}
 
