@@ -125,12 +125,24 @@ impl Add<Color> for Color {
 			panic!("Cannot add colors from different systems");
 		}
 
-		Self {
-			red: self.red + rhs.red,
-			green: self.green + rhs.green,
-			blue: self.blue + rhs.blue,
-			alpha: self.alpha + rhs.alpha,
-			system: self.system,
+		if let Some(s) = self.system {
+			let col = s.gamma_inv(&self);
+
+			s.gamma(&Self {
+				red: col.red + rhs.red,
+				green: col.green + rhs.green,
+				blue: col.blue + rhs.blue,
+				alpha: col.alpha + rhs.alpha,
+				system: self.system,
+			})
+		} else {
+			Self {
+				red: self.red + rhs.red,
+				green: self.green + rhs.green,
+				blue: self.blue + rhs.blue,
+				alpha: self.alpha + rhs.alpha,
+				system: self.system,
+			}
 		}
 	}
 }
@@ -143,43 +155,70 @@ impl Sub<Color> for Color {
 			panic!("Cannot subtract colors from different systems");
 		}
 
-		Self {
-			red: self.red - rhs.red,
-			green: self.green - rhs.green,
-			blue: self.blue - rhs.blue,
-			alpha: self.alpha - rhs.alpha,
-			system: self.system,
+		if let Some(s) = self.system {
+			let col = s.gamma_inv(&self);
+			let rhs = s.gamma_inv(&rhs);
+
+			s.gamma(&Self {
+				red: col.red - rhs.red,
+				green: col.green - rhs.green,
+				blue: col.blue - rhs.blue,
+				alpha: col.alpha - rhs.alpha,
+				system: self.system,
+			})
+		} else {
+			Self {
+				red: self.red - rhs.red,
+				green: self.green - rhs.green,
+				blue: self.blue - rhs.blue,
+				alpha: self.alpha - rhs.alpha,
+				system: self.system,
+			}
 		}
 	}
 }
 
 impl AddAssign<Color> for Color {
 	fn add_assign(&mut self, rhs: Self) {
-		self.red += rhs.red;
-		self.green += rhs.green;
-		self.blue += rhs.blue;
-		self.alpha += rhs.alpha;
+		let col = self.clone() + rhs;
+		self.red = col.red;
+		self.green = col.green;
+		self.blue = col.blue;
+		self.alpha = col.alpha;
 	}
 }
 
 impl SubAssign<Color> for Color {
 	fn sub_assign(&mut self, rhs: Self) {
-		self.red -= rhs.red;
-		self.green -= rhs.green;
-		self.blue -= rhs.blue;
-		self.alpha -= rhs.alpha;
+		let col = self.clone() - rhs;
+		self.red = col.red;
+		self.green = col.green;
+		self.blue = col.blue;
+		self.alpha = col.alpha;
 	}
 }
 
 impl Mul<f64> for Color {
 	type Output = Self;
 	fn mul(self, rhs: f64) -> Self {
-		Self {
-			red: self.red * rhs,
-			green: self.green * rhs,
-			blue: self.blue * rhs,
-			alpha: self.alpha * rhs,
-			system: self.system,
+		if let Some(s) = self.system {
+			let col = s.gamma_inv(&self);
+
+			s.gamma(&Self {
+				red: col.red * rhs,
+				green: col.green * rhs,
+				blue: col.blue * rhs,
+				alpha: col.alpha * rhs,
+				system: self.system,
+			})
+		} else {
+			Self {
+				red: self.red * rhs,
+				green: self.green * rhs,
+				blue: self.blue * rhs,
+				alpha: self.alpha * rhs,
+				system: self.system,
+			}
 		}
 	}
 }
@@ -187,31 +226,45 @@ impl Mul<f64> for Color {
 impl Div<f64> for Color {
 	type Output = Self;
 	fn div(self, rhs: f64) -> Self {
-		Self {
-			red: self.red / rhs,
-			green: self.green / rhs,
-			blue: self.blue / rhs,
-			alpha: self.alpha / rhs,
-			system: self.system,
+		if let Some(s) = self.system {
+			let col = s.gamma_inv(&self);
+
+			s.gamma(&Self {
+				red: col.red / rhs,
+				green: col.green / rhs,
+				blue: col.blue / rhs,
+				alpha: col.alpha / rhs,
+				system: self.system,
+			})
+		} else {
+			Self {
+				red: self.red / rhs,
+				green: self.green / rhs,
+				blue: self.blue / rhs,
+				alpha: self.alpha / rhs,
+				system: self.system,
+			}
 		}
 	}
 }
 
 impl MulAssign<f64> for Color {
 	fn mul_assign(&mut self, rhs: f64) {
-		self.red *= rhs;
-		self.green *= rhs;
-		self.blue *= rhs;
-		self.alpha *= rhs;
+		let col = self.clone() * rhs;
+		self.red = col.red;
+		self.green = col.green;
+		self.blue = col.blue;
+		self.alpha = col.alpha;
 	}
 }
 
 impl DivAssign<f64> for Color {
 	fn div_assign(&mut self, rhs: f64) {
-		self.red /= rhs;
-		self.green /= rhs;
-		self.blue /= rhs;
-		self.alpha /= rhs;
+		let col = self.clone() / rhs;
+		self.red = col.red;
+		self.green = col.green;
+		self.blue = col.blue;
+		self.alpha = col.alpha;
 	}
 }
 
