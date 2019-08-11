@@ -1,9 +1,9 @@
 use crate::gamut::ColorSystem;
 use crate::gamut::SYSTEM_SRGB;
 use crate::xyz::XYZ;
+use nalgebra::{Vector3, Vector4};
 use std::fmt;
 use std::ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Sub, SubAssign};
-use nalgebra::{Vector3, Vector4};
 
 /** Linear RGB Color structure */
 #[derive(Clone, Debug, Default, PartialEq)]
@@ -275,31 +275,58 @@ impl Into<u32> for Color {
 
 impl Into<(f64, f64, f64, f64)> for Color {
 	fn into(self) -> (f64, f64, f64, f64) {
-		(self.red, self.green, self.red, self.alpha)
+		if let Some(s) = self.system {
+			let col = s.gamma_inv(&self);
+			(col.red, col.green, col.blue, col.alpha)
+		} else {
+			(self.red, self.green, self.blue, self.alpha)
+		}
 	}
 }
 
 impl Into<[f64; 3]> for Color {
 	fn into(self) -> [f64; 3] {
-		[self.red, self.green, self.blue]
+		if let Some(s) = self.system {
+			let col = s.gamma_inv(&self);
+
+			[col.red, col.green, col.blue]
+		} else {
+			[self.red, self.green, self.blue]
+		}
 	}
 }
 
 impl Into<[f64; 4]> for Color {
 	fn into(self) -> [f64; 4] {
-		[self.red, self.green, self.blue, self.alpha]
+		if let Some(s) = self.system {
+			let col = s.gamma_inv(&self);
+			[col.red, col.green, col.blue, col.alpha]
+		} else {
+			[self.red, self.green, self.blue, self.alpha]
+		}
 	}
 }
 
 impl Into<Vector3<f64>> for Color {
 	fn into(self) -> Vector3<f64> {
-		Vector3::new(self.red, self.green, self.blue)
+		if let Some(s) = self.system {
+			let col = s.gamma_inv(&self);
+			Vector3::new(col.red, col.green, col.blue)
+		} else {
+			Vector3::new(self.red, self.green, self.blue)
+		}
 	}
 }
 
 impl Into<Vector4<f64>> for Color {
 	fn into(self) -> Vector4<f64> {
-		Vector4::new(self.red, self.green, self.blue, self.alpha)
+		if let Some(s) = self.system {
+			let col = s.gamma_inv(&self);
+
+			Vector4::new(col.red, col.green, col.blue, col.alpha)
+		} else {
+			Vector4::new(self.red, self.green, self.blue, self.alpha)
+		}
 	}
 }
 
