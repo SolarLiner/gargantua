@@ -60,39 +60,36 @@ pub struct XYChroma {
 
 impl ColorSystem {
 	pub fn to_rgb(&self, xyz: &XYZ) -> Result<Color, &'static str> {
-		self.get_matrix_to_xyz()
-			.try_inverse()
-			.ok_or("Couldn't inverse XYZ to RGB matrix")
+		self.get_matrix_to_rgb()
 			.map(|m| {
 				let v: Vector3<f64> = xyz.clone().into();
 				m * v
 			})
-			.map(|vec| self.gamma(&Color::with_system(vec.x, vec.y, vec.z, *self)))
+			.map(|v| self.gamma(&Color::from(v)).into_with_system(*self))
 	}
 
-	pub fn to_xyz(&self, col: &Color) -> XYZ {
+	pub fn to_xyz(&self, col: &Color) -> Result<XYZ, &'static str> {
 		let lin_col = self.gamma_inv(col);
-		let m = self.get_matrix_to_xyz();
-		let colvec: Vector3<f64> = lin_col.into();
-		let xyzvec = m * colvec;
+		self.get_matrix_to_rgb().map(|m| {
+			let colv: Vector3<f64> = lin_col.into();
+			let xyzv: Vector3<f64> = m * colv;
 
-		XYZ {
-			X: xyzvec.x,
-			Y: xyzvec.y,
-			Z: xyzvec.z,
-		}
+			XYZ::from(m * colv)
+		})
 	}
 
 	pub fn desaturate(&self, col: &Color, percent: f64) -> Result<Color, &'static str> {
-		let (xy, Y) = self.to_xyz(col).to_chromaticity();
-
-		self.to_rgb(&XYZ::chromaticity(
-			XYChroma {
-				x: lerp(percent, xy.x, self.white.x),
-				y: lerp(percent, xy.y, self.white.y),
-			},
-			Y,
-		))
+		self.to_xyz(col)
+			.map(|xyz| xyz.to_chromaticity())
+			.and_then(|(xy, Y)| {
+				self.to_rgb(&XYZ::chromaticity(
+					XYChroma {
+						x: lerp(percent, xy.x, self.white.x),
+						y: lerp(percent, xy.y, self.white.y),
+					},
+					Y,
+				))
+			})
 	}
 
 	pub fn gamma(&self, col: &Color) -> Color {
@@ -113,12 +110,32 @@ impl ColorSystem {
 		return new_col;
 	}
 
-	fn get_matrix_to_xyz(&self) -> Matrix3<f64> {
-		let red: Unit<Vector3<f64>> = self.red.into();
-		let green: Unit<Vector3<f64>> = self.green.into();
-		let blue: Unit<Vector3<f64>> = self.blue.into();
+	fn get_matrix_to_rgb(&self) -> Result<Matrix3<f64>, &'static str> {
+		let (xr, yr, zr) = self.red.get_matrix_comp();
+		let (xg, yg, zg) = self.green.get_matrix_comp();
+		let (xb, yb, zb) = self.blue.get_matrix_comp();
 
-		Matrix3::from_columns(&[red.into_inner(), green.into_inner(), blue.into_inner()])
+		let mat = Matrix3::new(xr, xg, xb, yr, yg, yb, zr, zg, zb);
+		let ref_white = XYZ::chromaticity(self.white, 1.0);
+		let sv: Option<Vector3<f64>> = mat
+			.try_inverse()
+			.map(|m| m * Vector3::new(ref_white.X, ref_white.Y, ref_white.Z));
+		return match sv {
+			Some(s) => {
+				let mut mat2 = mat.clone();
+				mat2[(0, 0)] *= s[0];
+				mat2[(0, 1)] *= s[1];
+				mat2[(0, 2)] *= s[2];
+				mat2[(1, 0)] *= s[0];
+				mat2[(1, 1)] *= s[1];
+				mat2[(1, 2)] *= s[2];
+				mat2[(2, 0)] *= s[0];
+				mat2[(2, 1)] *= s[1];
+				mat2[(2, 2)] *= s[2];
+				Ok(mat2)
+			}
+			None => Err("Cannot transpose XYZ component matrix"),
+		};
 	}
 }
 
@@ -147,7 +164,8 @@ impl Default for ColorSystem {
 
 impl Into<Matrix3<f64>> for ColorSystem {
 	fn into(self) -> Matrix3<f64> {
-		self.get_matrix_to_xyz()
+		self.get_matrix_to_rgb()
+			.expect("Couldn't get XYZ to RGB matrix")
 	}
 }
 

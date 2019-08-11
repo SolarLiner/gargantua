@@ -66,7 +66,7 @@ impl Color {
 		self.system
 			.or(default_system)
 			.ok_or("No color system provided, either from the Color object or as a default")
-			.map(|s| s.to_xyz(self))
+			.and_then(|s| s.to_xyz(self))
 	}
 	pub fn replace_rgb(&self, red: f64, green: f64, blue: f64) -> Self {
 		Color {
@@ -93,7 +93,7 @@ impl Color {
 			.fold(0.0f64, |p, c| if p.abs() < c.abs() { *c } else { p });
 		return self.replace_rgb(self.red / max, self.green / max, self.blue / max);
 	}
-	pub fn set_system(&self, sys: ColorSystem) -> Self {
+	pub fn into_with_system(self, sys: ColorSystem) -> Self {
 		let mut col = self.clone();
 		col.system = Some(sys);
 

@@ -1,6 +1,5 @@
-
-use color::Color;
 use color::consts::SYSTEM_SRGB;
+use color::Color;
 use image::{open, DynamicImage, GenericImageView, Pixel};
 use nalgebra::Vector2;
 
@@ -49,7 +48,7 @@ impl Texture {
 			),
 			TextureMode::Repeat => rgba_to_color(self.0.get_pixel(x % width, y % height)),
 			TextureMode::Transparent => {
-				let mut col = Color::default().set_system(SYSTEM_SRGB);
+				let mut col = Color::default().into_with_system(SYSTEM_SRGB);
 				col.alpha = 0.0;
 				return col;
 			}
