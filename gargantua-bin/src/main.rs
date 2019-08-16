@@ -1,5 +1,5 @@
 use image::{DynamicImage, Pixel, Rgb};
-use nalgebra::Translation3;
+use nalgebra::{Translation3, UnitQuaternion, Vector3};
 use rand::Rng;
 use regex::Regex;
 
@@ -44,7 +44,7 @@ fn create_sphere_texture() -> Texture {
 
 fn setup_scene_flat(w: u32, h: u32) -> Scene {
 	let mut scn = Scene {
-		camera: Camera::new(w, h, 30.0),
+		camera: Camera::new(w, h, 20.0),
 		sphere: Sphere {
 			pos: Point::new(0.0, 0.0, 0.0),
 			radius: 1.0,
@@ -52,7 +52,7 @@ fn setup_scene_flat(w: u32, h: u32) -> Scene {
 		},
 		bgtex: Some(create_bg_texture()),
 	};
-	scn.set_camera(Some(Translation3::new(0.0, 0.0, 20.0)), None, None);
+	scn.set_camera(Some(Translation3::new(0.0, 5.5, -10.0)), None, None);
 
 	return scn;
 }
