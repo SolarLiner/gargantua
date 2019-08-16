@@ -76,7 +76,12 @@ impl Camera {
 		Self {
 			width,
 			height,
-			perspective: Perspective3::new(height as f64 / width as f64, fov.to_radians(), 0.01, 200.0),
+			perspective: Perspective3::new(
+				height as f64 / width as f64,
+				fov.to_radians(),
+				0.01,
+				200.0,
+			),
 			isometry: Isometry3::identity(),
 		}
 	}
@@ -121,7 +126,7 @@ impl Scene {
 			(None, None) => {}
 		};
 		if let Some(f) = fov {
-			self.camera.perspective.set_fovy(f);
+			self.camera.perspective.set_fovy(f.to_radians());
 		}
 	}
 
