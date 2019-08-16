@@ -96,11 +96,16 @@ impl Camera {
 
 	pub fn create_primary(&self, x: u32, y: u32) -> Ray {
 		let normalized = Point2::new(x as f64 / self.width as f64, y as f64 / self.height as f64);
-		let ndc_near = Point::new(normalized.x, normalized.y, -1.0);
-		let ndc_far = Point::new(normalized.x, normalized.y, 1.0);
+		let nds = normalized * 2.0 - Point2::new(1.0, 1.0);
+		let ndc_near = Point::new(nds.x, nds.y, -1.0);
+		let ndc_far = Point::new(nds.x, nds.y, 1.0);
 
-		let origin = self.perspective.unproject_point(&ndc_near);
-		let view_far = self.perspective.unproject_point(&ndc_far);
+		let origin = self
+			.isometry
+			.inverse_transform_point(&self.perspective.unproject_point(&ndc_near));
+		let view_far = self
+			.isometry
+			.inverse_transform_point(&self.perspective.unproject_point(&ndc_far));
 		let direction = Unit::new_normalize(view_far - origin);
 
 		Ray { origin, direction }
@@ -122,9 +127,11 @@ impl Scene {
 		rot: Option<UnitQuaternion<f64>>,
 		fov: Option<f64>,
 	) {
-		self.camera.isometry = match (trans, rot) {
-			(Some(t), Some(r)) => Isometry3::from_parts(t, r),
-			(None, _) | (_, None) => self.camera.isometry,
+		match (trans, rot) {
+			(Some(t), Some(r)) => self.camera.isometry = Isometry3::from_parts(t, r),
+			(Some(t), None) => self.camera.set_position(t),
+			(None, Some(r)) => self.camera.set_rotation(r),
+			(None, None) => {}
 		};
 		if let Some(f) = fov {
 			self.camera.perspective.set_fovy(f);
