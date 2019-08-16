@@ -51,28 +51,15 @@ pub trait Renderable {
 
 impl Intersectable for Sphere {
 	fn intersect(&self, ray: &Ray) -> Option<f64> {
-		let l = self.pos - ray.origin;
-		let adj2 = l.dot(&ray.direction);
-		let d2 = l.dot(&l) - (adj2 * adj2);
-		let r2 = self.radius * self.radius;
-		if d2 > r2 {
+		let oc = ray.origin - self.pos;
+		let loc = ray.direction.dot(&oc);
+		let under_sqrt = loc.powf(2.0) - (oc.dot(&oc) - self.radius.powf(2.0));
+		if under_sqrt < 0.0 {
 			return None;
+		} else if under_sqrt > 0.0 {
+			return Some((-loc + under_sqrt.sqrt()).min(-loc - under_sqrt.sqrt()));
 		}
-
-		let thc = (r2 - d2).sqrt();
-		let t0 = adj2 - thc;
-		let t1 = adj2 + thc;
-
-		if t0 < 0.0 && t1 < 0.0 {
-			return None;
-		} else if t0 < 0.0 {
-			return Some(t1);
-		} else if t1 < 0.0 {
-			return Some(t0);
-		} else {
-			let dist = if t0 < t1 { t0 } else { t1 };
-			return Some(dist);
-		}
+		return Some(loc);
 	}
 	fn surface_normal(&self, hit: &Point) -> Unit<Vector> {
 		Unit::new_normalize(*hit - self.pos)
