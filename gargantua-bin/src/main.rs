@@ -1,5 +1,6 @@
 use image::{DynamicImage, Pixel, Rgb};
 use nalgebra::Translation3;
+use rand::Rng;
 use regex::Regex;
 
 use gargantua::raytrace::render::render;
@@ -11,6 +12,21 @@ use std::{f64, u32};
 enum SpaceTime {
 	Flat,
 	Schwardzchild,
+}
+
+fn create_bg_texture() -> Texture {
+	let mut img = DynamicImage::new_rgb8(512, 256);
+	let mut rng = rand::thread_rng();
+	for (x, y, p) in img.as_mut_rgb8().unwrap().enumerate_pixels_mut() {
+		let mut val = rng.gen_range(0.0, 1.0);
+		if val > 0.4 {
+			val = (val - 0.4) / 0.6;
+		}
+		let col = (val * 255.0) as u8;
+		*p = Rgb::from_channels(col, col, col, 255);
+	}
+
+	return Texture(img, TextureFiltering::Nearest, TextureMode::Repeat);
 }
 
 fn create_sphere_texture() -> Texture {
@@ -34,7 +50,7 @@ fn setup_scene_flat(w: u32, h: u32) -> Scene {
 			radius: 1.0,
 			texture: create_sphere_texture(),
 		},
-		bgtex: None,
+		bgtex: Some(create_bg_texture()),
 	};
 	scn.set_camera(Some(Translation3::new(0.0, 0.0, 20.0)), None, None);
 
