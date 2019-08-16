@@ -106,7 +106,7 @@ mod tests {
 	use super::GRScene;
 
 	use crate::raytrace::render::render;
-	use crate::raytrace::{Point};
+	use crate::raytrace::Point;
 	use crate::{Camera, Scene, Sphere, Texture, TextureFiltering, TextureMode};
 	use image::{DynamicImage, Pixel, Rgb};
 

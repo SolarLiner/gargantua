@@ -1,10 +1,12 @@
 use color::Color;
 use image::{DynamicImage, Pixel, Rgb};
-use nalgebra::{Isometry3, Perspective3, Point2, Point3, Translation3, UnitQuaternion, Vector2, Vector3, Unit};
+use nalgebra::{
+	Isometry3, Perspective3, Point2, Point3, Translation3, Unit, UnitQuaternion, Vector2, Vector3,
+};
 use std::f64;
 
 use crate::texture::{Texture, TextureFiltering, TextureMode};
-use crate::utils::{cartesian_to_spherical};
+use crate::utils::cartesian_to_spherical;
 
 pub type Point = Point3<f64>;
 pub type Vector = Vector3<f64>;
@@ -181,7 +183,7 @@ impl Renderable for Scene {
 			}
 			None => {
 				let (_, theta, phi) = cartesian_to_spherical(&ray.direction);
-				let uv =  TexCoords::new(theta / f64::consts::PI, 0.5 * phi / f64::consts::PI + 0.5);
+				let uv = TexCoords::new(theta / f64::consts::PI, 0.5 * phi / f64::consts::PI + 0.5);
 				return bgtex.uv(uv);
 			}
 		}
@@ -290,7 +292,7 @@ pub mod render {
 #[cfg(test)]
 mod tests {
 	use super::Camera;
-	use nalgebra::{Translation3, Point3, Vector3};
+	use nalgebra::{Point3, Translation3, Vector3};
 
 	use approx::assert_relative_eq;
 
@@ -303,6 +305,10 @@ mod tests {
 
 		println!("{:?}", ray);
 		assert_relative_eq!(ray.origin, Point3::new(0.0, 0.0, 0.0), epsilon = 0.01);
-		assert_relative_eq!(ray.direction.into_inner(), Vector3::new(0.0, 0.0, -1.0), epsilon = 0.01);
+		assert_relative_eq!(
+			ray.direction.into_inner(),
+			Vector3::new(0.0, 0.0, -1.0),
+			epsilon = 0.01
+		);
 	}
 }

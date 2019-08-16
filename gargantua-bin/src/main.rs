@@ -4,7 +4,7 @@ use rand::Rng;
 use regex::Regex;
 
 use gargantua::raytrace::render::render;
-use gargantua::raytrace::{Point};
+use gargantua::raytrace::Point;
 use gargantua::{Camera, GRScene, Scene, Sphere, Texture, TextureFiltering, TextureMode};
 
 use std::{f64, u32};
@@ -17,7 +17,7 @@ enum SpaceTime {
 fn create_bg_texture() -> Texture {
 	let mut img = DynamicImage::new_rgb8(512, 256);
 	let mut rng = rand::thread_rng();
-	for (x, y, p) in img.as_mut_rgb8().unwrap().enumerate_pixels_mut() {
+	for (_x, _y, p) in img.as_mut_rgb8().unwrap().enumerate_pixels_mut() {
 		let mut val = rng.gen_range(0.0, 1.0);
 		if val > 0.4 {
 			val = (val - 0.4) / 0.6;
@@ -39,12 +39,12 @@ fn create_sphere_texture() -> Texture {
 		};
 	}
 
-	return Texture(img, TextureFiltering::Nearest, TextureMode::Transparent);
+	return Texture(img, TextureFiltering::Nearest, TextureMode::Repeat);
 }
 
 fn setup_scene_flat(w: u32, h: u32) -> Scene {
 	let mut scn = Scene {
-		camera: Camera::new(w, h, 10.0),
+		camera: Camera::new(w, h, 30.0),
 		sphere: Sphere {
 			pos: Point::new(0.0, 0.0, 0.0),
 			radius: 1.0,

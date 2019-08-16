@@ -72,7 +72,7 @@ impl ColorSystem {
 		let lin_col = self.gamma_inv(col);
 		self.get_matrix_to_rgb().map(|m| {
 			let colv: Vector3<f64> = lin_col.into();
-			let xyzv: Vector3<f64> = m * colv;
+			let _xyzv: Vector3<f64> = m * colv;
 
 			XYZ::from(m * colv)
 		})
