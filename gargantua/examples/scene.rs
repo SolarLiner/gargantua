@@ -33,7 +33,10 @@ fn main() {
     };
     scn.set_camera(Some(Translation3::new(0.0, 0.0, 4.0)), None, None);
 
-    render(scn, None)
+    render(
+        scn,
+        Some(&|p, msg| print!("{:2.2}% - {}       \r", 100.0 * p, msg)),
+    )
         .expect("Couldn't render scene")
         .save("output_scene.png")
         .expect("Couldn't save image");
