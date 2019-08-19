@@ -1,11 +1,11 @@
 use image::{DynamicImage, Pixel, Rgb};
-use nalgebra::{Translation3, UnitQuaternion, Vector3};
+use nalgebra::Translation3;
 use rand::Rng;
 use regex::Regex;
 
 use gargantua::raytrace::render::render;
 use gargantua::raytrace::Point;
-use gargantua::{Camera, GRScene, Scene, Sphere, Texture, TextureFiltering, TextureMode};
+use gargantua::{Camera, GRScene, Ring, Scene, Sphere, Texture, TextureFiltering, TextureMode};
 
 use std::{f64, u32};
 
@@ -19,8 +19,8 @@ fn create_bg_texture() -> Texture {
 	let mut rng = rand::thread_rng();
 	for (_x, _y, p) in img.as_mut_rgb8().unwrap().enumerate_pixels_mut() {
 		let mut val = rng.gen_range(0.0, 1.0);
-		if val > 0.4 {
-			val = (val - 0.4) / 0.6;
+		if val > 0.9 {
+			val = (val - 0.9) / 0.1;
 		}
 		let col = (val * 255.0) as u8;
 		*p = Rgb::from_channels(col, col, col, 255);
@@ -44,15 +44,21 @@ fn create_sphere_texture() -> Texture {
 
 fn setup_scene_flat(w: u32, h: u32) -> Scene {
 	let mut scn = Scene {
-		camera: Camera::new(w, h, 20.0),
+		camera: Camera::new(w, h, 50.0),
 		sphere: Sphere {
 			pos: Point::new(0.0, 0.0, 0.0),
 			radius: 1.0,
 			texture: create_sphere_texture(),
 		},
+		ring: Ring {
+			pos: Point::new(0.0, 0.0, 0.0),
+			radius: (2.0, 3.0),
+			texture_top: create_sphere_texture(),
+			texture_bottom: create_sphere_texture(),
+		},
 		bgtex: Some(create_bg_texture()),
 	};
-	scn.set_camera(Some(Translation3::new(0.0, 5.5, -10.0)), None, None);
+	scn.set_camera(Some(Translation3::new(0.0, 0.0, -30.0)), None, None);
 
 	return scn;
 }

@@ -26,6 +26,14 @@ pub struct Sphere {
 }
 
 #[derive(Clone)]
+pub struct Ring {
+	pub pos: Point,
+	pub radius: (f64, f64),
+	pub texture_top: Texture,
+	pub texture_bottom: Texture
+}
+
+#[derive(Clone)]
 pub struct Camera {
 	pub width: u32,
 	pub height: u32,
@@ -37,6 +45,7 @@ pub struct Camera {
 pub struct Scene {
 	pub camera: Camera,
 	pub sphere: Sphere,
+	pub ring: Ring,
 	pub bgtex: Option<Texture>,
 }
 
@@ -70,6 +79,35 @@ impl Intersectable for Sphere {
 		let dir = *hit - self.pos;
 		let (_, theta, phi) = cartesian_to_spherical(&dir);
 		return TexCoords::new(theta / f64::consts::PI, 0.5 * phi / f64::consts::PI + 0.5);
+	}
+}
+
+impl Intersectable for Ring {
+	fn intersect(&self, ray: &Ray) -> Option<f64> {
+		match ray_plane(&Ray {origin: self.pos, direction: Vector::z_axis()}, ray) {
+			Some(t) => {
+				let p = ray.origin + ray.direction.as_ref() * t;
+				let d2 = p.coords.dot(&p.coords);
+				if d2 > self.radius.0 || d2 < self.radius.1 {
+					return None;
+				} else {
+					return Some(t);
+				}
+			},
+			None => None
+		}
+	}
+
+	fn surface_normal(&self, hit: &Point) -> Unit<Vector> {
+		Vector::z_axis()
+	}
+
+	fn texture_coords(&self, hit: &Point) -> TexCoords {
+		let local = hit - self.pos;
+		let r = local.dot(&local).sqrt();
+		let theta = local.normalize().dot(&Vector::x_axis().as_ref());
+
+		return TexCoords::new(r * theta.cos(), r * theta.sin());
 	}
 }
 
@@ -175,18 +213,20 @@ impl Renderable for Scene {
 		let this = self.clone();
 		let bgtex = this.get_background();
 		let ray = self.camera.create_primary(x, y);
-		match self.sphere.intersect(&ray) {
-			Some(p) => {
+
+		self.ring.intersect(&ray).map(|p| {
+				let hit = ray.origin + ray.direction.as_ref() * p;
+				let uv = self.ring.texture_coords(&hit);
+				return self.ring.texture_top.uv(uv);
+		}).or_else(|| self.sphere.intersect(&ray).map(|p| {
 				let hit = ray.origin + ray.direction.as_ref() * p;
 				let uv = self.sphere.texture_coords(&hit);
 				return self.sphere.texture.uv(uv);
-			}
-			None => {
+		})).or_else(|| {
 				let (_, theta, phi) = cartesian_to_spherical(&ray.direction);
 				let uv = TexCoords::new(theta / f64::consts::PI, 0.5 * phi / f64::consts::PI + 0.5);
-				return bgtex.uv(uv);
-			}
-		}
+				return Some(bgtex.uv(uv));
+		}).unwrap()
 	}
 
 	fn get_dimensions(&self) -> (u32, u32) {
@@ -287,6 +327,14 @@ pub mod render {
 			None => Err("Couldn't create image"),
 		}
 	}
+}
+
+fn ray_plane(plane: &Ray, ray: &Ray) -> Option<f64> {
+	let ln = ray.direction.dot(&plane.direction);
+	if ln == 0.0 {
+		return None;
+	}
+	return Some((plane.origin - ray.origin).dot(&plane.direction) / ln);
 }
 
 #[cfg(test)]

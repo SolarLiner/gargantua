@@ -2,7 +2,7 @@ use image::{DynamicImage, Pixel, Rgb};
 use nalgebra::{Translation3};
 
 use gargantua::raytrace::render::render;
-use gargantua::raytrace::{Camera, Scene, Sphere, Point};
+use gargantua::raytrace::{Camera, Ring, Scene, Sphere, Point};
 use gargantua::texture::{Texture, TextureFiltering, TextureMode};
 
 fn main() {
@@ -28,6 +28,12 @@ fn main() {
             pos: Point::new(0.0, 0.0, 0.0),
             radius: 1.0,
             texture: Texture(texture, TextureFiltering::Nearest, TextureMode::Repeat),
+        },
+        ring: Ring {
+            pos: Point::new(0.0, 0.0, 0.0),
+            radius: (2.0, 3.0),
+            texture_top: Texture(texture, TextureFiltering::Nearest, TextureMode::Repeat),
+            texture_bottom: Texture(texture, TextureFiltering::Nearest, TextureMode::Repeat)
         },
         bgtex: None,
     };
