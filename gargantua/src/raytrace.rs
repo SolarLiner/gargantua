@@ -96,10 +96,10 @@ impl Camera {
 
 		let origin = self
 			.isometry
-			.inverse_transform_point(&self.perspective.unproject_point(&ndc_near));
+			.transform_point(&self.perspective.unproject_point(&ndc_near));
 		let view_far = self
 			.isometry
-			.inverse_transform_point(&self.perspective.unproject_point(&ndc_far));
+			.transform_point(&self.perspective.unproject_point(&ndc_far));
 		let direction = Unit::new_normalize(view_far - origin);
 
 		Ray { origin, direction }

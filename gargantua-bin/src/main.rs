@@ -52,13 +52,20 @@ fn setup_scene_flat(w: u32, h: u32) -> Scene {
 		},
 		bgtex: Some(create_bg_texture()),
 	};
-	scn.set_camera(Some(Translation3::new(0.0, 5.5, -10.0)), None, None);
+	scn.set_camera(
+		Some(Translation3::new(0.0, -50.0, 0.0)),
+		Some(UnitQuaternion::from_axis_angle(
+			&Vector3::x_axis(),
+			f64::consts::FRAC_PI_2,
+		)),
+		None,
+	);
 
 	return scn;
 }
 
 fn setup_scene_gr(w: u32, h: u32) -> GRScene {
-	GRScene(setup_scene_flat(w, h), 0.16, 300)
+	GRScene(setup_scene_flat(w, h), 0.16, 500)
 }
 
 fn main() {
