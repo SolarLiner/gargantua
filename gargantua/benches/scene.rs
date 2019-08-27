@@ -46,6 +46,11 @@ fn setup_scene_flat(w: u32, h: u32) -> Scene {
 			radius: 1.0,
 			texture: create_sphere_texture(),
 		},
+		ring: Ring {
+			pos: Point::new(0.0, 0.0, 0.0),
+			radius: (2.0, 3.0),
+			texture: create_sphere_texture()
+		}
 	};
 
 	scn.set_camera(Some(Translation3::new(0.0, 0.0, 20.0)), None, None);
