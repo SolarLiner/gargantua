@@ -1,5 +1,5 @@
 use image::{DynamicImage, Pixel, Rgb};
-use nalgebra::{Translation3, UnitQuaternion};
+use nalgebra::{Translation3, UnitQuaternion, Vector3};
 use rand::Rng;
 use regex::Regex;
 
