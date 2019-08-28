@@ -30,7 +30,7 @@ pub struct Ring {
 	pub pos: Point,
 	pub radius: (f64, f64),
 	pub texture_top: Texture,
-	pub texture_bottom: Texture
+	pub texture_bottom: Texture,
 }
 
 #[derive(Clone)]
@@ -84,21 +84,27 @@ impl Intersectable for Sphere {
 
 impl Intersectable for Ring {
 	fn intersect(&self, ray: &Ray) -> Option<f64> {
-		match ray_plane(&Ray {origin: self.pos, direction: Vector::z_axis()}, ray) {
+		match ray_plane(
+			&Ray {
+				origin: self.pos,
+				direction: Vector::z_axis(),
+			},
+			ray,
+		) {
 			Some(t) => {
 				let p = ray.origin + ray.direction.as_ref() * t;
 				let d2 = p.coords.dot(&p.coords);
-				if d2 > self.radius.0 || d2 < self.radius.1 {
+				if d2 > self.radius.0 * self.radius.0 || d2 < self.radius.1 * self.radius.1 {
 					return None;
 				} else {
 					return Some(t);
 				}
-			},
-			None => None
+			}
+			None => None,
 		}
 	}
 
-	fn surface_normal(&self, hit: &Point) -> Unit<Vector> {
+	fn surface_normal(&self, _hit: &Point) -> Unit<Vector> {
 		Vector::z_axis()
 	}
 
@@ -214,19 +220,26 @@ impl Renderable for Scene {
 		let bgtex = this.get_background();
 		let ray = self.camera.create_primary(x, y);
 
-		self.ring.intersect(&ray).map(|p| {
+		self.ring
+			.intersect(&ray)
+			.map(|p| {
 				let hit = ray.origin + ray.direction.as_ref() * p;
 				let uv = self.ring.texture_coords(&hit);
 				return self.ring.texture_top.uv(uv);
-		}).or_else(|| self.sphere.intersect(&ray).map(|p| {
-				let hit = ray.origin + ray.direction.as_ref() * p;
-				let uv = self.sphere.texture_coords(&hit);
-				return self.sphere.texture.uv(uv);
-		})).or_else(|| {
+			})
+			.or_else(|| {
+				self.sphere.intersect(&ray).map(|p| {
+					let hit = ray.origin + ray.direction.as_ref() * p;
+					let uv = self.sphere.texture_coords(&hit);
+					return self.sphere.texture.uv(uv);
+				})
+			})
+			.or_else(|| {
 				let (_, theta, phi) = cartesian_to_spherical(&ray.direction);
 				let uv = TexCoords::new(theta / f64::consts::PI, 0.5 * phi / f64::consts::PI + 0.5);
 				return Some(bgtex.uv(uv));
-		}).unwrap()
+			})
+			.unwrap()
 	}
 
 	fn get_dimensions(&self) -> (u32, u32) {
