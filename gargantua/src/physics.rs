@@ -38,12 +38,24 @@ impl Particle {
 		self.pos
 	}
 
+	pub fn set_pos(&mut self, pos: Point) {
+		self.pos = pos;
+	}
+
 	pub fn vel(&self) -> Vector {
 		self.vel
 	}
 
+	pub fn set_vel(&mut self, vel: Vector) {
+		self.vel = vel;
+	}
+
 	pub fn acc(&self) -> Vector {
 		self.acc
+	}
+
+	pub fn set_acc(&mut self, acc: Vector) {
+		self.acc = acc;
 	}
 }
 

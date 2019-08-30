@@ -44,7 +44,7 @@ fn create_sphere_texture() -> Texture {
 
 fn setup_scene_flat(w: u32, h: u32) -> Scene {
 	let mut scn = Scene {
-		camera: Camera::new(w, h, 50.0),
+		camera: Camera::new(w, h, 30.0),
 		sphere: Sphere {
 			pos: Point::new(0.0, 0.0, 0.0),
 			radius: 1.0,
@@ -59,7 +59,7 @@ fn setup_scene_flat(w: u32, h: u32) -> Scene {
 		bgtex: Some(create_bg_texture()),
 	};
 	scn.set_camera(
-		Some(Translation3::new(0.0, -50.0, 0.0)),
+		Some(Translation3::new(0.0, -50.0, 2.0)),
 		Some(UnitQuaternion::from_axis_angle(
 			&Vector3::x_axis(),
 			f64::consts::FRAC_PI_2,

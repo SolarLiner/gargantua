@@ -34,9 +34,10 @@ impl GRParticle {
 		let h2vec = self.particle.pos().coords.cross(&self.particle.vel());
 		let h2 = h2vec.dot(&h2vec);
 		for _ in 0..max_iter {
-			let from_sphere = self.particle.pos() - sphere.pos;
-			self.particle.add_force(gr_potential(from_sphere, h2));
-			self.particle.update(self.dt);
+			// let from_sphere = self.particle.pos() - sphere.pos;
+			// self.particle.add_force(gr_potential(from_sphere, h2));
+			// self.particle.update(self.dt);
+			self.rk4_gr(sphere.pos, h2);
 			let to_sphere = sphere.pos - self.particle.pos();
 			if to_sphere.dot(&to_sphere) < sphere.radius * sphere.radius {
 				return Some(self.particle.pos());
@@ -44,6 +45,18 @@ impl GRParticle {
 		}
 
 		return None;
+	}
+
+	fn rk4_gr(&mut self, sing_pos: Point, h2: f64) {
+		// print!("Iteration: old pos: {}", self.particle.pos());
+		let vel = runge_kutta4(
+			&|v| gr_potential(v, h2),
+			self.particle.pos() - sing_pos,
+			self.dt,
+		);
+		self.particle.set_vel(vel);
+		self.particle.set_pos(self.particle.pos() + vel * self.dt);
+		println!("Position: {} Velocity: {}", self.particle.pos(), vel);
 	}
 }
 
@@ -101,13 +114,22 @@ fn gr_potential(pos: Vector, h2: f64) -> Vector {
 	return -1.5 * h2 * pos / pos_fifth;
 }
 
+fn runge_kutta4(fx: &Fn(Vector) -> Vector, x: Vector, dt: f64) -> Vector {
+	let k1 = dt * fx(x);
+	let k2 = dt * fx(x + k1 / 2.0);
+	let k3 = dt * fx(x + k2 / 2.0);
+	let k4 = dt * fx(x + k3);
+
+	x + (k1 + 2.0 * k2 + 2.0 * k3 + k4) / 6.0
+}
+
 #[cfg(test)]
 mod tests {
 	use super::GRScene;
 
 	use crate::raytrace::render::render;
 	use crate::raytrace::Point;
-	use crate::{Camera, Scene, Sphere, Texture, TextureFiltering, TextureMode};
+	use crate::{Camera, Ring, Scene, Sphere, Texture, TextureFiltering, TextureMode};
 	use image::{DynamicImage, Pixel, Rgb};
 
 	#[test]
