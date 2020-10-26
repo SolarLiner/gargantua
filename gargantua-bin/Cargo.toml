@@ -8,7 +8,7 @@ edition = "2018"
 color = { path = "../color" }
 gargantua = { path = "../gargantua" }
 clap = "2.33.0"
-image = "0.22.1"
+image = "0.23.11"
 nalgebra = "0.18.0"
 ncurses = "5.99.0"
 rand = "0.7.0"
