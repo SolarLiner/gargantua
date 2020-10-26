@@ -9,7 +9,7 @@ color = {path = "../color"}
 image = "0.22.1"
 nalgebra = "0.18.0"
 rayon = "1.1.0"
-approx = "0.3.2"
+approx = "0.4.0"
 num_cpus = "1.10.1"
 
 [dev-dependencies]
