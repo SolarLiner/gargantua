@@ -9,7 +9,7 @@ color = { path = "../color" }
 gargantua = { path = "../gargantua" }
 clap = "2.33.0"
 image = "0.22.1"
-nalgebra = "0.18.0"
+nalgebra = "0.23.2"
 ncurses = "5.99.0"
 rand = "0.7.0"
 regex = "1.2.1"
