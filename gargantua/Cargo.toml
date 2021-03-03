@@ -6,7 +6,7 @@ edition = "2018"
 
 [dependencies]
 color = {path = "../color"}
-image = "0.22.1"
+image = "0.23.14"
 nalgebra = "0.18.0"
 rayon = "1.1.0"
 approx = "0.3.2"
