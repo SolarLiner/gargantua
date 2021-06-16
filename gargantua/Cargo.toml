@@ -14,7 +14,7 @@ num_cpus = "1.10.1"
 
 [dev-dependencies]
 criterion = "0.2.11"
-rand = "0.7.0"
+rand = "0.8.4"
 
 [[bench]]
 name = "scene"
