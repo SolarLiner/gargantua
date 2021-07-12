@@ -5,7 +5,7 @@ authors = ["Nathan Graule <solarliner@gmail.com>"]
 edition = "2018"
 
 [dependencies]
-nalgebra = "0.18.0"
+nalgebra = "0.28.0"
 
 [dev-dependencies]
 approx = "0.3.2"
